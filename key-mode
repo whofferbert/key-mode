@@ -1,0 +1,193 @@
+#!/usr/bin/env perl
+# a thing to figure out chords and progressions given a key and mode
+use Data::Dumper;
+use 5.010;
+
+my @notes = qw(A A# B C C# D D# E F F# G G#);
+my @mode_pattern = qw(2 2 1 2 2 2 1);
+my @modes = qw(Ionian Dorian Phrygian Lydian Mixolydian Aeolian Locrian);
+my @numerals = qw (I II III IV V VI VII);
+
+my $in_key = $ARGV[0];
+my $in_mode = $ARGV[1];
+
+sub help {
+  my $help = <<END_HELP;
+
+Usage: $0 [key] [mode]
+
+Where [key] is any of :  @notes
+
+And [mode] is any of :   @modes
+
+ex:
+  $0 A dorian
+END_HELP
+
+say $help;
+exit;
+}
+
+&help unless ( ( grep(/$in_key/, @notes) ) && ( grep(/\b$in_mode\b/, @modes) ) && ($in_key) && ($in_mode) );
+
+# figure out where we are
+my ( $mode_index )= grep {$modes[$_] eq $in_mode} 0..$#modes;
+my ( $note_index )= grep {$notes[$_] eq $in_key} 0..$#notes;
+
+# get to the right mode pattern
+for (my $i=0 ; $i < $mode_index ; $i++) { 
+  my $first = shift @mode_pattern;
+  push (@mode_pattern, $first);
+}
+
+# get to the right note structure
+for (my $i=0 ; $i < $note_index ; $i++) { 
+  my $first = shift @notes;
+  push (@notes, $first);
+}
+
+my @orig_notes = @notes;
+my @scale_notes;
+
+# this destroys the array notes :( had to save it with orig_notes
+# figure out the notes in the scale
+foreach $mode_pattern_degree (@mode_pattern) {
+  $first = shift @notes;
+  push (@scale_notes, $first);
+  for (my $i=1 ; $i < $mode_pattern_degree ; $i++) {
+    shift @notes;
+  }
+}
+
+@notes = @orig_notes;
+my @progression;
+
+# for each base note of the scale, figure out it's triad (chord)
+foreach $snote (@scale_notes) {
+
+  my $note_degree;
+  for (my $i=0 ; $i <= $#scale_notes ; $i++) {
+    $note_degree = $i if ($scale_notes[$i] eq $snote)
+  }
+
+  my @adj_notes = @scale_notes;
+  for (my $i=0 ; $i < $note_degree ; $i++) { 
+    my $first = shift @adj_notes;
+    push (@adj_notes, $first);
+  }
+
+  my @chord;
+  for (my $i=0 ; $i < 3 ; $i++) {
+    my $note = shift @adj_notes;
+    push(@chord, $note);
+    shift @adj_notes;
+  }
+
+  push(@progression, \@chord);
+}
+
+# Now we know what the chord notes are, so figure out if major or minor, push to hash
+my %music;
+my $n = 0;
+foreach $chord (@progression) {
+
+  $first_note = @{$chord}[0];
+  my $first_note_degree;
+  for (my $i=0 ; $i <= $#notes ; $i++) {
+    $first_note_degree = $i if ($notes[$i] eq $first_note)
+  }
+
+  my @adj_scale = @notes;
+  for (my $i=0 ; $i < $first_note_degree ; $i++) {
+    my $first = shift @adj_scale;
+    push (@adj_scale, $first);
+  }
+
+  my $pattern;
+  my $chord_notes;
+  foreach $note (@{$chord}){
+    my $note_degree;
+    for (my $i=0 ; $i <= $#adj_scale ; $i++) {
+      $note_degree = $i if ($adj_scale[$i] eq $note)
+    }
+    $pattern .= $note_degree;
+    $chord_notes .= "$note ";
+  }
+
+  $music{$n}{notes} = $chord_notes;
+  $music{$n}{base} = $first_note;
+
+  if ($pattern eq "036") {
+    $music{$n}{sig} = "Dim °";
+    $music{$n}{num} = lc($numerals[$n]) . "°";
+  } elsif ($pattern eq "037") {
+    $music{$n}{sig} = "Minor";
+    $music{$n}{num} = lc($numerals[$n]);
+  } elsif ($pattern eq "047") {
+    $music{$n}{sig} = "Major";
+    $music{$n}{num} = $numerals[$n];
+  } elsif ($pattern eq "048") {
+    $music{$n}{sig} = "Aug +";
+    $music{$n}{num} = $numerals[$n] . "+";
+  }
+
+  $n++;
+}
+
+#
+# take the info and spit it out in a useful way
+#
+
+print "\n";
+
+say "    $in_key $in_mode\n";
+
+say "  Scale Notes: @scale_notes\n";
+
+print "  Progression: ";
+foreach $chord (sort (keys %music)) {
+  print "$music{$chord}{num} ";
+}
+
+print "\n\n  Chords: \n\n| ";
+
+foreach $chord (sort (keys %music)) {
+  print "$music{$chord}{base} $music{$chord}{sig} | ";
+}
+
+print "\n| ";
+foreach $chord (sort (keys %music)) {
+  print "$music{$chord}{notes}";
+
+  my $padding = length("$music{$chord}{base} $music{$chord}{sig} ") - length($music{$chord}{notes});
+  $padding-- if ($music{$chord}{sig} eq "Dim °");
+
+  for (my $i=1 ; $i <= $padding ; $i++) {
+    print " ";
+  }
+
+  print "| ";
+}
+
+print "\n| ";
+foreach $chord (sort (keys %music)) {
+  my $padding = length("$music{$chord}{base} $music{$chord}{sig} ") - length($music{$chord}{num}) - 1;
+  print "$music{$chord}{num} ";
+  for (my $i=1 ; $i <= $padding ; $i++) {
+    print " ";
+  }
+  print "| ";
+}
+
+print "\n\n";
+
+# this is the worst bit of everything. guessing a lot
+say "  Progression Chart:";
+my $prog = <<END_PROG;
+                       $music{3}{num}  -  $music{6}{num}
+  $music{6}{num} -> $music{2}{num} -> $music{5}{num} <      ><       > $music{0}{num}
+                       $music{1}{num}  -  $music{4}{num}
+END_PROG
+say "$prog";
+
+say "";
