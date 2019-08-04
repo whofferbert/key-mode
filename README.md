@@ -45,6 +45,7 @@ Additional Options
 
   -guitar-tuning ["Open Notes"]
     Open notes can be any quoted list of notes, low to high.
+    Not limited to 6 strings.
     Default is "E A D G B E"
 
   -root-color [COLOR]
@@ -67,9 +68,14 @@ Additional Options
 
 Examples:
 
-  key-mode -key A -mode dorian
+  Get info on A Dorian
+    key-mode -key A -mode dorian
 
-  key-mode -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian"
+  Get info about a user-provided scale
+    key-mode -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian"
+ 
+  Get info about a user-provided scale for an 8 string guitar with weird tuning:
+    key-mode -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian" -guitar-tuning "E A D A D G B E"
  
 ```
 
@@ -100,6 +106,7 @@ $ ./key-mode -key A -mode Phrygian
 ```
 
 ## E Super Locrian, provided at the CLI
+There is coloization to the fingerboard output at the CLI, it just does not translate properly to the markdown. The root, third, and fifth notes are all assigned their own colors, for clarity.
 
 ```bash
 $ ./key-mode -steps "1 3 1 2 1 2 2" -key E -name "Super Locrian" -guitar-poss
