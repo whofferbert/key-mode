@@ -29,7 +29,9 @@ my @modes = qw(Ionian Dorian Phrygian Lydian Mixolydian Aeolian Locrian);
 my @numerals = qw (I II III IV V VI VII);
 
 # guitar options...
-my $show_fingerboard;
+my ($show_fingerboard, $condense_boards);
+my $fret_width = 3;
+my $max_fret_number = 15;
 my @guitar_tuning = ("E", "A", "D", "G", "B", "E");
 my @highlight_frets = qw(0 3 5 7 9 12 15);
 
@@ -140,6 +142,9 @@ Additional Options
     Colors may be any of:
       $color_str
 
+  -condense-boards
+    Print the guitar fingerboards in multiple columns
+
 Examples:
 
   $prog -key A -mode dorian
@@ -198,6 +203,9 @@ sub handle_args {
     'guitar-possibilities' => \$show_fingerboard,
     'guitar-tuning=s' => \&parse_tuning,
     'root-color=s' => sub {&parse_colors(\$root_color, $_[1])},
+    'third-color=s' => sub {&parse_colors(\$third_color, $_[1])},
+    'fifth-color=s' => sub {&parse_colors(\$fifth_color, $_[1])},
+    'condense-boards' => \$condense_boards,
     'h|help' => \&usage,
      ) )   {
     &check_required_args;
@@ -431,18 +439,14 @@ $relation_block
 }
 
 
-sub print_guitar_boards {
+sub get_guitar_boards {
   my (%music) = @_;
-
-  my $fret_width = 3;
-  my $max_fret_number = 15;
+  my @fingerboards;
 
   my @repeat_notes = @notes;
-  # double it up
   push(@repeat_notes, @notes);
 
   for my $chord (sort keys %music) {
-    # build printing array backwards
     my $chord_notes = $music{$chord}{notes};
     my @chord_notes = split(/\s+/, $chord_notes);
     my @print_arr;
@@ -468,10 +472,10 @@ sub print_guitar_boards {
           $string .= "-" x $fret_width . "|"
         }
       }
-      $string .= "\n";
-      push(@print_arr, $string);
+      #$string .= "\n";
+      #push(@print_arr, $string);
+      unshift(@print_arr, $string);
     }
-    say "$music{$chord}{base} $music{$chord}{sig} - $music{$chord}{notes}";
     my $number_str;
     for my $i (0..$max_fret_number) {
       my $difference = $fret_width - length($i);
@@ -482,10 +486,48 @@ sub print_guitar_boards {
         $number_str .= $i . $diffstr;
       }
     }
-    $number_str .= "\n";
-    push(@print_arr, $number_str);
-    map {print} reverse @print_arr;
-    say "";
+    #$number_str .= "\n";
+    #push(@print_arr, $number_str);
+    unshift(@print_arr, $number_str);
+    unshift(@print_arr, "$music{$chord}{base} $music{$chord}{sig} - $music{$chord}{notes}");
+    push (@fingerboards, \@print_arr);
+  }
+  return @fingerboards;
+}
+
+
+sub print_boards {
+  my @fingerboards = @_;
+  if ($condense_boards) {
+    # making pairs of boards
+    while (scalar(@fingerboards)) {
+      my $one = shift @fingerboards;
+      my $two = shift @fingerboards;
+      if ($two) {
+        my @one = @{$one};
+        my @two = @{$two};
+        # mash the two arrays together for printing
+        my $buffer = 8;
+        my $width = ($fret_width + 1) * ($max_fret_number + 1);
+        my $title_length = length($one[0]);
+        my $title_buffer = " " x ($width + $buffer - $title_length);
+        my $line_buffer = " " x $buffer;
+        say $one[0] . $title_buffer . $two[0];
+        for (1..$#one) {
+          say $one[$_] . $line_buffer . $two[$_];
+        }
+        say "";
+      } else {
+        map {say} @$one;
+        say "";
+      }
+    }
+  } else {
+    for my $aref (@fingerboards) {
+      my @arr = @{$aref};
+      map {say} @arr;
+      say "";
+    }
   }
 }
 
@@ -496,7 +538,10 @@ sub main {
   my @progression = &find_progression(@scale_notes);
   my %music = &find_tonality(@progression);
   &output_data(\@scale_notes, \%music);
-  &print_guitar_boards(%music) if $show_fingerboard;
+  if ($show_fingerboard) {
+    my @fboard = &get_guitar_boards(%music);
+    &print_boards(@fboard);
+  }
 }
 
 
