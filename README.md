@@ -291,7 +291,7 @@ E--|---|---|---|---|A--|---|---|---|C#-|---|---|E--|---|---|---|
 
 ```
 
-## C Ionian (Major) in an open C tuning
+## C Ionian (Major) in open C tuning
 ```bash
 $ ./key-mode -mode Ionian -key C -fingerboards -guitar-tuning "C G C G C E"
 

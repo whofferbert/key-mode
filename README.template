@@ -30,7 +30,7 @@ There is coloization to the fingerboard output at the CLI, it just does not tran
 !% ./key-mode -mode Aeolian -key B -fingerboards -guitar-tuning "B E A D G B E" %!
 ```
 
-## C Ionian (Major) in an open C tuning
+## C Ionian (Major) in open C tuning
 ```bash
 !% ./key-mode -mode Ionian -key C -fingerboards -guitar-tuning "C G C G C E" %!
 ```
