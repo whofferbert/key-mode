@@ -65,6 +65,7 @@ Additional Options
 
   -condense-boards
     Print the guitar fingerboards in multiple columns
+    Good for running with a wide terminal
 
 Examples:
 
