@@ -128,6 +128,7 @@ Additional Options
 
   -guitar-tuning ["Open Notes"]
     Open notes can be any quoted list of notes, low to high.
+    Not limited to 6 strings.
     Default is "E A D G B E"
 
   -root-color [COLOR]
@@ -147,9 +148,14 @@ Additional Options
 
 Examples:
 
-  $prog -key A -mode dorian
+  Get info on A Dorian
+    $prog -key A -mode dorian
 
-  $prog -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian"
+  Get info about a user-provided scale
+    $prog -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian"
+ 
+  Get info about a user-provided scale for an 8 string guitar with weird tuning:
+    $prog -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian" -guitar-tuning "E A D A D G B E"
  
   END_USAGE
 
