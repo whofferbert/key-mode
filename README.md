@@ -85,6 +85,10 @@ Examples:
 # Runtime Examples
 ## A Phrygian, from built in scales
 
+
+<details><summary>./key-mode -key A -mode Phrygian</summary>
+<p>
+
 ```bash
 $ ./key-mode -key A -mode Phrygian
 
@@ -108,8 +112,15 @@ $ ./key-mode -key A -mode Phrygian
 
 ```
 
+</p>
+</details>
+
+
 ## E Super Locrian, provided at the CLI
 There is coloization to the fingerboard output at the CLI, it just does not translate properly to the markdown. The root, third, and fifth notes are all assigned their own colors, for clarity.
+
+<details><summary>./key-mode -steps "1 3 1 2 1 2 2" -key E -name "Super Locrian" -fingerboards</summary>
+<p>
 
 ```bash
 $ ./key-mode -steps "1 3 1 2 1 2 2" -key E -name "Super Locrian" -fingerboards
@@ -206,7 +217,13 @@ E--|F--|---|---|G#-|A--|---|B--|C--|---|D--|---|E--|F--|---|---|
 
 ```
 
+</p>
+</details>
+
 ## B Aeolian (Minor) on a 7 string guitar
+<details><summary>./key-mode -mode Aeolian -key B -fingerboards -guitar-tuning "B E A D G B E"</summary>
+<p>
+
 ```bash
 $ ./key-mode -mode Aeolian -key B -fingerboards -guitar-tuning "B E A D G B E"
 
@@ -310,7 +327,13 @@ B--|---|C#-|D--|---|E--|---|F#-|G--|---|A--|---|B--|---|C#-|D--|
 
 ```
 
+</p>
+</details>
+
 ## C Ionian (Major) in open C tuning
+<details><summary>./key-mode -mode Ionian -key C -fingerboards -guitar-tuning "C G C G C E"</summary>
+<p>
+
 ```bash
 $ ./key-mode -mode Ionian -key C -fingerboards -guitar-tuning "C G C G C E"
 
@@ -405,4 +428,7 @@ G--|---|A--|---|B--|C--|---|D--|---|E--|F--|---|G--|---|A--|---|
 C--|---|D--|---|E--|F--|---|G--|---|A--|---|B--|C--|---|D--|---|
 
 ```
+
+</p>
+</details>
 
