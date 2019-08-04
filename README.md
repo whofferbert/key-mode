@@ -83,6 +83,8 @@ Examples:
 ```
 
 # Runtime Examples
+Click the sections to expand their details
+
 ## A Phrygian, from built in scales
 
 
