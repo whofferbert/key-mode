@@ -30,7 +30,7 @@ Usage:
 
   Steps:
     ["quoted pattern"] can consist of any quoted and space
-    elimited set of numbers which adds up to 12, to allow
+    delimited set of 7 numbers which add up to 12, to allow
     for extrapolation of non-built in modes.
 
 Additional Options
@@ -39,7 +39,7 @@ Additional Options
     Scale Name can be any quoted string.
     Provides the name to display when using a custom Step signature
 
-  -guitar-possibilities
+  -fingerboards
     For each chord in the scale, print a representation of a guitar
     figerboard, with the notes displayed
 
@@ -71,11 +71,14 @@ Examples:
   Get info on A Dorian
     key-mode -key A -mode dorian
 
+  Get info on E Aeolian, along with fretboard note positions
+    key-mode -key E -mode Aeolian -fingerboards
+
   Get info about a user-provided scale
     key-mode -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian"
  
-  Get info about a user-provided scale for an 8 string guitar with weird tuning:
-    key-mode -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian" -guitar-tuning "E A D A D G B E"
+  Get info and fingerboard patterns for an 8 string guitar with weird tuning:
+    key-mode -key B -mode Mixolydian -fingerboards -guitar-tuning "E A D A D G B E"
  
 ```
 
@@ -109,7 +112,7 @@ $ ./key-mode -key A -mode Phrygian
 There is coloization to the fingerboard output at the CLI, it just does not translate properly to the markdown. The root, third, and fifth notes are all assigned their own colors, for clarity.
 
 ```bash
-$ ./key-mode -steps "1 3 1 2 1 2 2" -key E -name "Super Locrian" -guitar-poss
+$ ./key-mode -steps "1 3 1 2 1 2 2" -key E -name "Super Locrian" -fingerboards
 
   E  -  Super Locrian
   
@@ -191,5 +194,100 @@ D Minor - D F A
 D--|---|---|F--|---|---|---|A--|---|---|---|---|D--|---|---|F--|
 A--|---|---|---|---|D--|---|---|F--|---|---|---|A--|---|---|---|
 ---|F--|---|---|---|A--|---|---|---|---|D--|---|---|F--|---|---|
+
+```
+
+## B Mixolydian on a 7 string guitar
+
+```bash
+$ ./key-mode -mode Mixolydian -key B -fingerboards -guitar-tuning "B E A D G B E"
+
+  B  -  Mixolydian
+  
+  Scale Notes:   B C# D# E F# G# A
+
+  Progression:   I ii iii° IV v vi VII 
+
+  Chords:
+
+    | B Major | C# Minor | D# Dim ° | E Major | F# Minor | G# Minor | A Major | 
+    | B D# F# | C# E G#  | D# F# A  | E G# B  | F# A C#  | G# B D#  | A C# E  | 
+    | I       | ii       | iii°     | IV      | v        | vi       | VII     | 
+  
+  Progression Chart:
+
+                         IV  -  VII
+    VII -> iii° -> vi <      ><       > I
+                         ii  -  v
+
+B Major - B D# F# 
+0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
+---|---|F#-|---|---|---|---|B--|---|---|---|D#-|---|---|F#-|---|
+B--|---|---|---|D#-|---|---|F#-|---|---|---|---|B--|---|---|---|
+---|---|---|---|B--|---|---|---|D#-|---|---|F#-|---|---|---|---|
+---|D#-|---|---|F#-|---|---|---|---|B--|---|---|---|D#-|---|---|
+---|---|B--|---|---|---|D#-|---|---|F#-|---|---|---|---|B--|---|
+---|---|F#-|---|---|---|---|B--|---|---|---|D#-|---|---|F#-|---|
+B--|---|---|---|D#-|---|---|F#-|---|---|---|---|B--|---|---|---|
+
+C# Minor - C# E G# 
+0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
+E--|---|---|---|G#-|---|---|---|---|C#-|---|---|E--|---|---|---|
+---|---|C#-|---|---|E--|---|---|---|G#-|---|---|---|---|C#-|---|
+---|G#-|---|---|---|---|C#-|---|---|E--|---|---|---|G#-|---|---|
+---|---|E--|---|---|---|G#-|---|---|---|---|C#-|---|---|E--|---|
+---|---|---|---|C#-|---|---|E--|---|---|---|G#-|---|---|---|---|
+E--|---|---|---|G#-|---|---|---|---|C#-|---|---|E--|---|---|---|
+---|---|C#-|---|---|E--|---|---|---|G#-|---|---|---|---|C#-|---|
+
+D# Dim ° - D# F# A 
+0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
+---|---|F#-|---|---|A--|---|---|---|---|---|D#-|---|---|F#-|---|
+---|---|---|---|D#-|---|---|F#-|---|---|A--|---|---|---|---|---|
+---|---|A--|---|---|---|---|---|D#-|---|---|F#-|---|---|A--|---|
+---|D#-|---|---|F#-|---|---|A--|---|---|---|---|---|D#-|---|---|
+A--|---|---|---|---|---|D#-|---|---|F#-|---|---|A--|---|---|---|
+---|---|F#-|---|---|A--|---|---|---|---|---|D#-|---|---|F#-|---|
+---|---|---|---|D#-|---|---|F#-|---|---|A--|---|---|---|---|---|
+
+E Major - E G# B 
+0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
+E--|---|---|---|G#-|---|---|B--|---|---|---|---|E--|---|---|---|
+B--|---|---|---|---|E--|---|---|---|G#-|---|---|B--|---|---|---|
+---|G#-|---|---|B--|---|---|---|---|E--|---|---|---|G#-|---|---|
+---|---|E--|---|---|---|G#-|---|---|B--|---|---|---|---|E--|---|
+---|---|B--|---|---|---|---|E--|---|---|---|G#-|---|---|B--|---|
+E--|---|---|---|G#-|---|---|B--|---|---|---|---|E--|---|---|---|
+B--|---|---|---|---|E--|---|---|---|G#-|---|---|B--|---|---|---|
+
+F# Minor - F# A C# 
+0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
+---|---|F#-|---|---|A--|---|---|---|C#-|---|---|---|---|F#-|---|
+---|---|C#-|---|---|---|---|F#-|---|---|A--|---|---|---|C#-|---|
+---|---|A--|---|---|---|C#-|---|---|---|---|F#-|---|---|A--|---|
+---|---|---|---|F#-|---|---|A--|---|---|---|C#-|---|---|---|---|
+A--|---|---|---|C#-|---|---|---|---|F#-|---|---|A--|---|---|---|
+---|---|F#-|---|---|A--|---|---|---|C#-|---|---|---|---|F#-|---|
+---|---|C#-|---|---|---|---|F#-|---|---|A--|---|---|---|C#-|---|
+
+G# Minor - G# B D# 
+0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
+---|---|---|---|G#-|---|---|B--|---|---|---|D#-|---|---|---|---|
+B--|---|---|---|D#-|---|---|---|---|G#-|---|---|B--|---|---|---|
+---|G#-|---|---|B--|---|---|---|D#-|---|---|---|---|G#-|---|---|
+---|D#-|---|---|---|---|G#-|---|---|B--|---|---|---|D#-|---|---|
+---|---|B--|---|---|---|D#-|---|---|---|---|G#-|---|---|B--|---|
+---|---|---|---|G#-|---|---|B--|---|---|---|D#-|---|---|---|---|
+B--|---|---|---|D#-|---|---|---|---|G#-|---|---|B--|---|---|---|
+
+A Major - A C# E 
+0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
+E--|---|---|---|---|A--|---|---|---|C#-|---|---|E--|---|---|---|
+---|---|C#-|---|---|E--|---|---|---|---|A--|---|---|---|C#-|---|
+---|---|A--|---|---|---|C#-|---|---|E--|---|---|---|---|A--|---|
+---|---|E--|---|---|---|---|A--|---|---|---|C#-|---|---|E--|---|
+A--|---|---|---|C#-|---|---|E--|---|---|---|---|A--|---|---|---|
+E--|---|---|---|---|A--|---|---|---|C#-|---|---|E--|---|---|---|
+---|---|C#-|---|---|E--|---|---|---|---|A--|---|---|---|C#-|---|
 
 ```
