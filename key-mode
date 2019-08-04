@@ -74,9 +74,15 @@ my %colors = (
   'BGWHITE'        => "\e[47m"
 );
 
-my $root_color = $colors{BRED};
-my $third_color = $colors{BYELLOW};
-my $fifth_color = $colors{BGREEN};
+my %scale_colors = (
+  '0' => $colors{BRED},
+  '1' => $colors{BLACK},
+  '2' => $colors{BYELLOW},
+  '3' => $colors{BLUE},
+  '4' => $colors{BGREEN},
+  '5' => $colors{MAJENTA},
+  '6' => $colors{CYAN},
+);
 
 my $fret_color = $colors{WHITE};
 
@@ -202,7 +208,7 @@ sub parse_tuning {
 sub parse_colors {
   my ($thing, $color) = @_;
   if (grep {$color eq $_} @colors) {
-    $$thing = $colors{$color};
+    $scale_colors{$thing} = $colors{$color};
   } else {
     say "$color is not a valid color!";
     exit;
@@ -217,9 +223,9 @@ sub handle_args {
     'name=s' => \$user_scale_name,
     'fingerboards' => \$show_fingerboard,
     'guitar-tuning=s' => \&parse_tuning,
-    'root-color=s' => sub {&parse_colors(\$root_color, $_[1])},
-    'third-color=s' => sub {&parse_colors(\$third_color, $_[1])},
-    'fifth-color=s' => sub {&parse_colors(\$fifth_color, $_[1])},
+    'root-color=s' => sub {&parse_colors(0, $_[1])},
+    'third-color=s' => sub {&parse_colors(2, $_[1])},
+    'fifth-color=s' => sub {&parse_colors(4, $_[1])},
     'condense-boards' => \$condense_boards,
     'h|help' => \&usage,
      ) )   {
@@ -421,7 +427,7 @@ sub output_data {
   my $scale_str = join" ", @scale_notes;
 
   my $prog_str;
-  foreach my $chord (sort (keys %music)) {
+  foreach my $chord (0..6) {
     $prog_str.= $music{$chord}{num} . " ";
   }
 
@@ -431,8 +437,6 @@ sub output_data {
   #$in_mode ||= "User provided scale";
   if (! defined $in_mode) {
     $in_mode = ($user_scale_name) ? $user_scale_name : "User provided scale" ;
-    #if (! defined $user_scale_name) {
-    #||= "User provided scale";
   }
 
   my $output = << "  ENDOUT";
@@ -457,12 +461,21 @@ $relation_block
 }
 
 
+#
+# TODO this function is a bit long and could use some finesse
+#
+
 sub get_guitar_boards {
-  my (%music) = @_;
+  my ($scale_ref, $music_ref) = @_;
+  my @scale_notes = @{$scale_ref};
+  my %music = %{$music_ref};
   my @fingerboards;
 
   my @repeat_notes = @notes;
   push(@repeat_notes, @notes);
+  $music{7}{notes} = join" ", @scale_notes;
+  $music{7}{base} = $in_key;
+  $music{7}{sig} = $in_mode;
 
   for my $chord (sort keys %music) {
     my $chord_notes = $music{$chord}{notes};
@@ -477,21 +490,24 @@ sub get_guitar_boards {
       for my $fret (0..$max_fret_number) {
         my $difference = $fret_width - length $note_shift[$fret];
         my $diffstr = "-" x $difference;
-        if ($note_shift[$fret] eq $chord_notes[0]) {
-          $string .= $root_color . $note_shift[$fret] . $reset . $diffstr . "|";
+        my $matched = 0;
+        if (scalar @chord_notes == 3) {
+          for my $i (0..2) {
+            if ($note_shift[$fret] eq $chord_notes[$i]) {
+              $matched = 1;
+              $string .= $scale_colors{$i * 2} . $note_shift[$fret] . $reset . $diffstr . "|";
+            }
+          }
+        } else {
+          for my $i (0..6) {
+            if ($note_shift[$fret] eq $chord_notes[$i]) {
+              $matched = 1;
+              $string .= $scale_colors{$i} . $note_shift[$fret] . $reset . $diffstr . "|";
+            }
+          }
         }
-        elsif ($note_shift[$fret] eq $chord_notes[1]) {
-          $string .= $third_color . $note_shift[$fret] . $reset . $diffstr . "|";
-        }
-        elsif ($note_shift[$fret] eq $chord_notes[2]) {
-          $string .= $fifth_color . $note_shift[$fret] . $reset . $diffstr . "|";
-        }
-        else {
-          $string .= "-" x $fret_width . "|"
-        }
+        $string .= "-" x $fret_width . "|" if $matched == 0;
       }
-      #$string .= "\n";
-      #push(@print_arr, $string);
       unshift(@print_arr, $string);
     }
     my $number_str;
@@ -504,8 +520,6 @@ sub get_guitar_boards {
         $number_str .= $i . $diffstr;
       }
     }
-    #$number_str .= "\n";
-    #push(@print_arr, $number_str);
     unshift(@print_arr, $number_str);
     unshift(@print_arr, "$music{$chord}{base} $music{$chord}{sig} - $music{$chord}{notes}");
     push (@fingerboards, \@print_arr);
@@ -559,7 +573,7 @@ sub main {
   #say Dumper(\%music);
   &output_data(\@scale_notes, \%music);
   if ($show_fingerboard) {
-    my @fboard = &get_guitar_boards(%music);
+    my @fboard = &get_guitar_boards(\@scale_notes, \%music);
     &print_boards(@fboard);
   }
 }
