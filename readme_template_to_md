@@ -1,0 +1,33 @@
+#!/usr/bin/env perl
+# parse a template file and write a new markdown file
+
+use strict;
+use warnings;
+use 5.010;
+
+my $infile = "./README.template";
+my $outfile = "./README.md";
+
+my $out_data;
+
+open my $FH, "<", $infile;
+
+while (my $line = (<$FH>)) {
+  if ($line =~ /!% (.*) %!/) {
+    my $string = '$ ' . $1 . "\n";
+    my $output = `$1`;
+    # remove ANSII escapes
+    $output =~ s/\e\[(1;)?\d+m//g;
+    #say $output;
+    $out_data .= $string;
+    $out_data .= $output;
+  } else {
+    $out_data .= $line;
+  }
+}
+
+close $FH;
+
+open my $OFH, ">", $outfile;
+print $OFH $out_data;
+close $OFH;
