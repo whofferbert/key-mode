@@ -148,6 +148,7 @@ Examples:
  
   END_USAGE
 
+  chomp $usage;
   say "$usage";
   exit(0);
 }
