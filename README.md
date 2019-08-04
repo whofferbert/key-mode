@@ -1,5 +1,12 @@
 # key-mode
 
+This is a perl utility which can print helpful information about scales
+and progressions, based on input key and mode.
+
+Custom step patterns can be provided, to get info on non-built-in scales.
+
+The help text is referenced here for clarity:
+
 ```bash
 $ ./key-mode -help
 
@@ -55,6 +62,9 @@ Additional Options
       BGREEN, BMAJENTA, BCYAN, BWHITE, BGDEFAULT, BGBLACK, BGRED, 
       BGBLUE, BGYELLOW, BGGREEN, BGMAJENTA, BGCYAN, BGWHITE
 
+  -condense-boards
+    Print the guitar fingerboards in multiple columns
+
 Examples:
 
   key-mode -key A -mode dorian
@@ -65,6 +75,7 @@ Examples:
 
 # Runtime Examples
 ## A Phrygian, from built in scales
+
 ```bash
 $ ./key-mode -key A -mode Phrygian
 
@@ -89,6 +100,7 @@ $ ./key-mode -key A -mode Phrygian
 ```
 
 ## E Super Locrian, provided at the CLI
+
 ```bash
 $ ./key-mode -steps "1 3 1 2 1 2 2" -key E -name "Super Locrian" -guitar-poss
 
