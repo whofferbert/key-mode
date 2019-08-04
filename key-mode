@@ -25,6 +25,8 @@ my @notes = ("A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#");
 my @step_pattern = qw(2 2 1 2 2 2 1);
 my @modes = qw(Ionian Dorian Phrygian Lydian Mixolydian Aeolian Locrian);
 
+# TODO a hash of modes that correlate to scale steps
+
 # numerals for chart representations
 my @numerals = qw (I II III IV V VI VII);
 
@@ -113,7 +115,7 @@ Usage:
 
   Steps:
     ["quoted pattern"] can consist of any quoted and space
-    elimited set of numbers which adds up to 12, to allow
+    delimited set of 7 numbers which add up to 12, to allow
     for extrapolation of non-built in modes.
 
 Additional Options
@@ -122,7 +124,7 @@ Additional Options
     Scale Name can be any quoted string.
     Provides the name to display when using a custom Step signature
 
-  -guitar-possibilities
+  -fingerboards
     For each chord in the scale, print a representation of a guitar
     figerboard, with the notes displayed
 
@@ -151,11 +153,14 @@ Examples:
   Get info on A Dorian
     $prog -key A -mode dorian
 
+  Get info on E Aeolian, along with fretboard note positions
+    $prog -key E -mode Aeolian -fingerboards
+
   Get info about a user-provided scale
     $prog -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian"
  
-  Get info about a user-provided scale for an 8 string guitar with weird tuning:
-    $prog -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian" -guitar-tuning "E A D A D G B E"
+  Get info and fingerboard patterns for an 8 string guitar with weird tuning:
+    $prog -key B -mode Mixolydian -fingerboards -guitar-tuning "E A D A D G B E"
  
   END_USAGE
 
@@ -167,6 +172,10 @@ Examples:
 sub check_required_args {		# handle leftover @ARGV stuff here if need be
   if (! $in_mode && ! @in_steps) {
     &helps;
+  }
+  if (@in_steps) {
+    &err("Unexpected number of steps in -steps!") unless scalar @in_steps == 7;
+    &err("Steps don't add up to 12!") unless (eval join"+",@in_steps) == 12;
   }
 }
 
@@ -206,7 +215,7 @@ sub handle_args {
     'mode=s' => \$in_mode,
     'steps=s' => \&parse_insteps,
     'name=s' => \$user_scale_name,
-    'guitar-possibilities' => \$show_fingerboard,
+    'fingerboards' => \$show_fingerboard,
     'guitar-tuning=s' => \&parse_tuning,
     'root-color=s' => sub {&parse_colors(\$root_color, $_[1])},
     'third-color=s' => sub {&parse_colors(\$third_color, $_[1])},
@@ -343,6 +352,9 @@ sub find_tonality {
     } elsif ($pattern eq "048") {
       $music{$n}{sig} = "Aug +";
       $music{$n}{num} = $numerals[$n] . "+";
+    } else {
+      $music{$n}{sig} = "?????";
+      $music{$n}{num} = $numerals[$n] . "?";
     }
   
     $n++;
@@ -512,7 +524,8 @@ sub print_boards {
       if ($two) {
         my @one = @{$one};
         my @two = @{$two};
-        # mash the two arrays together for printing
+        # mash the two arrays together for printing.
+        # cannot rely on length() here, due to ANSI color escapes.
         my $buffer = 8;
         my $width = ($fret_width + 1) * ($max_fret_number + 1);
         my $title_length = length($one[0]);
@@ -543,6 +556,7 @@ sub main {
   my @scale_notes = &shift_scales;
   my @progression = &find_progression(@scale_notes);
   my %music = &find_tonality(@progression);
+  #say Dumper(\%music);
   &output_data(\@scale_notes, \%music);
   if ($show_fingerboard) {
     my @fboard = &get_guitar_boards(%music);
