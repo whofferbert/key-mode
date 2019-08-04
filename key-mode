@@ -1,193 +1,504 @@
 #!/usr/bin/env perl
-# a thing to figure out chords and progressions given a key and mode
-use Data::Dumper;
-use 5.010;
+# by William Hofferbert
+# a script to get information about musical scales
 
-my @notes = qw(A A# B C C# D D# E F F# G G#);
-my @mode_pattern = qw(2 2 1 2 2 2 1);
+use 5.010;				# say
+use strict;				# good form
+use warnings;				# know when stuff is wrong
+use Data::Dumper;			# debug
+use File::Basename;			# know where the script lives
+use Getopt::Long;			# handle arguments
+# TODO require some module so windoze understands
+# the ANSII color escape sequences
+
+#
+# Default Variables
+#
+
+my $prog = basename($0);
+
+# conventional scale notes
+my @notes = ("A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#");
+# TODO flats optional instead of sharps?
+
+# step pattern and modes are related linearly
+my @step_pattern = qw(2 2 1 2 2 2 1);
 my @modes = qw(Ionian Dorian Phrygian Lydian Mixolydian Aeolian Locrian);
+
+# numerals for chart representations
 my @numerals = qw (I II III IV V VI VII);
 
-my $in_key = $ARGV[0];
-my $in_mode = $ARGV[1];
+# guitar options...
+my $show_fingerboard;
+my @guitar_tuning = ("E", "A", "D", "G", "B", "E");
+my @highlight_frets = qw(0 3 5 7 9 12 15);
 
-sub help {
-  my $help = <<END_HELP;
+my @colors = ('DEFAULT', 'BOLD', 'BLACK', 'RED', 'BLUE', 'YELLOW', 'GREEN',
+              'MAJENTA', 'CYAN', 'WHITE', 'BBLACK', 'BRED', 'BBLUE',
+              'BYELLOW', 'BGREEN', 'BMAJENTA', 'BCYAN', 'BWHITE', 'BGDEFAULT',
+              'BGBLACK', 'BGRED', 'BGBLUE', 'BGYELLOW', 'BGGREEN', 'BGMAJENTA',
+              'BGCYAN', 'BGWHITE');
 
-Usage: $0 [key] [mode]
+my $reset = "\e[0m";
+my %colors = (
+  'DEFAULT'      => "",
+  'BOLD'         => "\e[1m",
+  'BLACK'        => "\e[30m",
+  'RED'          => "\e[31m",
+  'GREEN'        => "\e[32m",
+  'YELLOW'       => "\e[33m",
+  'BLUE'         => "\e[34m",
+  'MAJENTA'      => "\e[35m",
+  'CYAN'         => "\e[36m",
+  'WHITE'        => "\e[37m",
+  'BBLACK'       => "\e[1;30m",
+  'BRED'         => "\e[1;31m",
+  'BGREEN'       => "\e[1;32m",
+  'BYELLOW'      => "\e[1;33m",
+  'BBLUE'        => "\e[1;34m",
+  'BMAJENTA'     => "\e[1;35m",
+  'BCYAN'        => "\e[1;36m",
+  'BWHITE'       => "\e[1;37m",
+  'BGDEFAULT'      => "",
+  'BGBLACK'        => "\e[40m",
+  'BGRED'          => "\e[41m",
+  'BGGREEN'        => "\e[42m",
+  'BGYELLOW'       => "\e[43m",
+  'BGBLUE'         => "\e[44m",
+  'BGMAJENTA'      => "\e[45m",
+  'BGCYAN'         => "\e[46m",
+  'BGWHITE'        => "\e[47m"
+);
 
-Where [key] is any of :  @notes
+my $root_color = $colors{BRED};
+my $third_color = $colors{BYELLOW};
+my $fifth_color = $colors{BGREEN};
 
-And [mode] is any of :   @modes
+my $fret_color = $colors{WHITE};
 
-ex:
-  $0 A dorian
-END_HELP
+# expected input vars
+my ($in_key, $in_mode, @in_steps, $user_scale_name);
 
-say $help;
-exit;
+#
+# Functions
+#
+
+sub usage {
+
+  my $color_str = join", ", @colors;
+  $color_str =~ s/((\S+\s+){7})/$1\n/g;
+  $color_str =~ s/\n/\n      /sg;
+
+  my $usage = <<"  END_USAGE";
+
+  This script can print out information about progressions
+  and chord relationships, based on an input key and mode.
+
+  Additionally, you can provide your own step pattern and key
+  if desired.
+
+Usage:
+  $prog -key [note] -mode [mode]
+  $prog -key [note] -steps ["quoted pattern"]
+
+  Key:
+    [note] can be any of:
+    @notes
+
+  Mode:
+    [mode] can be any of:
+    @modes
+
+  Steps:
+    ["quoted pattern"] can consist of any quoted and space
+    elimited set of numbers which adds up to 12, to allow
+    for extrapolation of non-built in modes.
+
+Additional Options
+
+  -name ["Scale Name"]
+    Scale Name can be any quoted string.
+    Provides the name to display when using a custom Step signature
+
+  -guitar-possibilities
+    For each chord in the scale, print a representation of a guitar
+    figerboard, with the notes displayed
+
+  -guitar-tuning ["Open Notes"]
+    Open notes can be any quoted list of notes, low to high.
+    Default is "E A D G B E"
+
+  -root-color [COLOR]
+    Default is BRED
+  -third-color [COLOR]
+    Default is BYELLOW
+  -fifth-color [COLOR]
+    Default is BGREEN
+
+    Assign a specific color to the root/third/fifth notes, when
+    drawing the guitar fingerboard patterns.
+    Colors may be any of:
+      $color_str
+
+Examples:
+
+  $prog -key A -mode dorian
+
+  $prog -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian"
+ 
+  END_USAGE
+
+  say "$usage";
+  exit(0);
 }
 
-&help unless ( ( grep(/$in_key/, @notes) ) && ( grep(/\b$in_mode\b/, @modes) ) && ($in_key) && ($in_mode) );
-
-# figure out where we are
-my ( $mode_index )= grep {$modes[$_] eq $in_mode} 0..$#modes;
-my ( $note_index )= grep {$notes[$_] eq $in_key} 0..$#notes;
-
-# get to the right mode pattern
-for (my $i=0 ; $i < $mode_index ; $i++) { 
-  my $first = shift @mode_pattern;
-  push (@mode_pattern, $first);
-}
-
-# get to the right note structure
-for (my $i=0 ; $i < $note_index ; $i++) { 
-  my $first = shift @notes;
-  push (@notes, $first);
-}
-
-my @orig_notes = @notes;
-my @scale_notes;
-
-# this destroys the array notes :( had to save it with orig_notes
-# figure out the notes in the scale
-foreach $mode_pattern_degree (@mode_pattern) {
-  $first = shift @notes;
-  push (@scale_notes, $first);
-  for (my $i=1 ; $i < $mode_pattern_degree ; $i++) {
-    shift @notes;
+sub check_required_args {		# handle leftover @ARGV stuff here if need be
+  if (! $in_mode && ! @in_steps) {
+    &helps;
   }
 }
 
-@notes = @orig_notes;
-my @progression;
-
-# for each base note of the scale, figure out it's triad (chord)
-foreach $snote (@scale_notes) {
-
-  my $note_degree;
-  for (my $i=0 ; $i <= $#scale_notes ; $i++) {
-    $note_degree = $i if ($scale_notes[$i] eq $snote)
-  }
-
-  my @adj_notes = @scale_notes;
-  for (my $i=0 ; $i < $note_degree ; $i++) { 
-    my $first = shift @adj_notes;
-    push (@adj_notes, $first);
-  }
-
-  my @chord;
-  for (my $i=0 ; $i < 3 ; $i++) {
-    my $note = shift @adj_notes;
-    push(@chord, $note);
-    shift @adj_notes;
-  }
-
-  push(@progression, \@chord);
+sub parse_insteps {
+  my $steps = $_[1];
+  push (@in_steps, split(/\s+/, $steps));
+  return(@in_steps);
 }
 
-# Now we know what the chord notes are, so figure out if major or minor, push to hash
-my %music;
-my $n = 0;
-foreach $chord (@progression) {
-
-  $first_note = @{$chord}[0];
-  my $first_note_degree;
-  for (my $i=0 ; $i <= $#notes ; $i++) {
-    $first_note_degree = $i if ($notes[$i] eq $first_note)
-  }
-
-  my @adj_scale = @notes;
-  for (my $i=0 ; $i < $first_note_degree ; $i++) {
-    my $first = shift @adj_scale;
-    push (@adj_scale, $first);
-  }
-
-  my $pattern;
-  my $chord_notes;
-  foreach $note (@{$chord}){
-    my $note_degree;
-    for (my $i=0 ; $i <= $#adj_scale ; $i++) {
-      $note_degree = $i if ($adj_scale[$i] eq $note)
+sub parse_tuning {
+  # TODO
+  my $tuning = $_[1];
+  @guitar_tuning = ();
+  for my $note (split(/\s+/, $tuning)) {
+    if (grep {$note eq $_} @notes) {
+      push @guitar_tuning, $note;
+    } else {
+      say "$note is not a valid note!";
+      exit;
     }
-    $pattern .= $note_degree;
-    $chord_notes .= "$note ";
   }
-
-  $music{$n}{notes} = $chord_notes;
-  $music{$n}{base} = $first_note;
-
-  if ($pattern eq "036") {
-    $music{$n}{sig} = "Dim °";
-    $music{$n}{num} = lc($numerals[$n]) . "°";
-  } elsif ($pattern eq "037") {
-    $music{$n}{sig} = "Minor";
-    $music{$n}{num} = lc($numerals[$n]);
-  } elsif ($pattern eq "047") {
-    $music{$n}{sig} = "Major";
-    $music{$n}{num} = $numerals[$n];
-  } elsif ($pattern eq "048") {
-    $music{$n}{sig} = "Aug +";
-    $music{$n}{num} = $numerals[$n] . "+";
-  }
-
-  $n++;
 }
 
-#
+sub parse_colors {
+  my ($thing, $color) = @_;
+  if (grep {$color eq $_} @colors) {
+    $$thing = $colors{$color};
+  } else {
+    say "$color is not a valid color!";
+    exit;
+  }
+}
+
+sub handle_args {
+  if ( Getopt::Long::GetOptions(
+    'key=s' => \$in_key,
+    'mode=s' => \$in_mode,
+    'steps=s' => \&parse_insteps,
+    'name=s' => \$user_scale_name,
+    'guitar-possibilities' => \$show_fingerboard,
+    'guitar-tuning=s' => \&parse_tuning,
+    'root-color=s' => sub {&parse_colors(\$root_color, $_[1])},
+    'h|help' => \&usage,
+     ) )   {
+    &check_required_args;
+  }
+}
+
+
+sub err {
+  my $msg=shift;
+  say STDERR $msg;
+  exit 2;
+}
+
+sub warn {
+  my $msg=shift;
+  say STDERR $msg;
+}
+
+sub rotate_array_left {
+  my ($amount, @array) = @_;
+  for (my $i=0 ; $i < $amount ; $i++) { 
+    my $pos1 = shift @array;
+    push (@array, $pos1);
+  }
+  return (@array);
+}
+
+sub shift_scales {
+
+  # mode step selection
+  if (@in_steps) {
+    # no shifting needed
+    @step_pattern = @in_steps;
+  } else {
+    # figure out where we are
+    my ( $step_index )= grep {$modes[$_] =~ /$in_mode/i} 0..$#modes;
+    # get to the right mode pattern
+    @step_pattern = &rotate_array_left($step_index, @step_pattern);
+  }
+
+  # get to the right note structure
+  my ( $note_index )= grep {$notes[$_] =~ /$in_key/i} 0..$#notes;
+  @notes = &rotate_array_left($note_index, @notes);
+
+  my @scale_notes;
+  my $current_step = 0;
+  
+  # build array of notes in teh scale
+  for my $step (@step_pattern) {
+    push(@scale_notes, $notes[$current_step]);
+    $current_step += $step;
+  }
+
+  return(@scale_notes);
+}
+
+sub find_progression {
+  my (@scale_notes) = @_;
+
+  my @progression;
+
+  # build all triads
+  foreach my $snote (@scale_notes) {
+  
+    my $note_degree;
+
+    for (my $i=0 ; $i <= $#scale_notes ; $i++) {
+      $note_degree = $i if ($scale_notes[$i] eq $snote)
+    }
+
+    my @adj_notes = &rotate_array_left($note_degree, @scale_notes);
+    #my @adj_notes = @scale_notes;
+    #for (my $i=0 ; $i < $note_degree ; $i++) { 
+    #  my $first = shift @adj_notes;
+    #  push (@adj_notes, $first);
+    #}
+  
+    my @chord;
+    $chord[0] = $adj_notes[0];
+    $chord[1] = $adj_notes[2];
+    $chord[2] = $adj_notes[4];
+  
+    push(@progression, \@chord);
+  }
+
+  return @progression;
+}
+
+sub find_tonality {
+  # Now we know what the chord notes are, so figure out if major or minor, push to hash
+  my (@progression) = @_;
+  my %music;
+
+  # TODO this could probably be an array of hashes
+  my $n = 0;
+  foreach my $chord (@progression) {
+  
+    my $first_note = @{$chord}[0];
+    my $first_note_degree;
+    for (my $i=0 ; $i <= $#notes ; $i++) {
+      $first_note_degree = $i if ($notes[$i] eq $first_note)
+    }
+  
+    my @adj_scale = &rotate_array_left($first_note_degree, @notes);
+  
+    my $pattern;
+    my $chord_notes;
+    foreach my $note (@{$chord}){
+      my $note_degree;
+      for (my $i=0 ; $i <= $#adj_scale ; $i++) {
+        $note_degree = $i if ($adj_scale[$i] eq $note)
+      }
+      $pattern .= $note_degree;
+      $chord_notes .= "$note ";
+    }
+  
+    $music{$n}{notes} = $chord_notes;
+    $music{$n}{base} = $first_note;
+  
+    if ($pattern eq "036") {
+      $music{$n}{sig} = "Dim °";
+      $music{$n}{num} = lc($numerals[$n]) . "°";
+    } elsif ($pattern eq "037") {
+      $music{$n}{sig} = "Minor";
+      $music{$n}{num} = lc($numerals[$n]);
+    } elsif ($pattern eq "047") {
+      $music{$n}{sig} = "Major";
+      $music{$n}{num} = $numerals[$n];
+    } elsif ($pattern eq "048") {
+      $music{$n}{sig} = "Aug +";
+      $music{$n}{num} = $numerals[$n] . "+";
+    }
+  
+    $n++;
+  }
+
+  return %music;
+}
+
+sub chord_output {
+  my (%music) = @_;
+
+  my $input_offset = "4";
+
+  my $input_spaces = " " x $input_offset;
+  my $outstr = "$input_spaces| ";
+
+  foreach my $chord (sort (keys %music)) {
+    $outstr .= "$music{$chord}{base} $music{$chord}{sig} | ";
+  }
+  
+  $outstr .= "\n$input_spaces| ";
+  foreach my $chord (sort (keys %music)) {
+    $outstr .= "$music{$chord}{notes}";
+    my $padding = length("$music{$chord}{base} $music{$chord}{sig} ") - length($music{$chord}{notes});
+    $padding-- if ($music{$chord}{sig} eq "Dim °");
+    for (my $i=1 ; $i <= $padding ; $i++) {
+      $outstr .= " ";
+    }
+    $outstr .= "| ";
+  }
+  
+  $outstr .= "\n$input_spaces| ";
+  foreach my $chord (sort (keys %music)) {
+    my $padding = length("$music{$chord}{base} $music{$chord}{sig} ") - length($music{$chord}{num}) - 1;
+    $outstr .= "$music{$chord}{num} ";
+    for (my $i=1 ; $i <= $padding ; $i++) {
+      $outstr .= " ";
+    }
+    $outstr .= "| ";
+  }
+
+  return $outstr;
+}
+
+sub relation_block {
+  my (%music) = @_;
+  my $prog = <<"  END_PROG";
+                         $music{3}{num}  -  $music{6}{num}
+    $music{6}{num} -> $music{2}{num} -> $music{5}{num} <      ><       > $music{0}{num}
+                         $music{1}{num}  -  $music{4}{num}
+  END_PROG
+  chomp $prog;
+  return $prog;
+}
+
+
+
 # take the info and spit it out in a useful way
-#
+sub output_data {
+  my ($scale_ref, $music_ref) = @_;
+  my @scale_notes = @{$scale_ref};
+  my %music = %{$music_ref};
 
-print "\n";
+  my $scale_str = join" ", @scale_notes;
 
-say "    $in_key $in_mode\n";
-
-say "  Scale Notes: @scale_notes\n";
-
-print "  Progression: ";
-foreach $chord (sort (keys %music)) {
-  print "$music{$chord}{num} ";
-}
-
-print "\n\n  Chords: \n\n| ";
-
-foreach $chord (sort (keys %music)) {
-  print "$music{$chord}{base} $music{$chord}{sig} | ";
-}
-
-print "\n| ";
-foreach $chord (sort (keys %music)) {
-  print "$music{$chord}{notes}";
-
-  my $padding = length("$music{$chord}{base} $music{$chord}{sig} ") - length($music{$chord}{notes});
-  $padding-- if ($music{$chord}{sig} eq "Dim °");
-
-  for (my $i=1 ; $i <= $padding ; $i++) {
-    print " ";
+  my $prog_str;
+  foreach my $chord (sort (keys %music)) {
+    $prog_str.= $music{$chord}{num} . " ";
   }
 
-  print "| ";
-}
+  my $chord_block = &chord_output(%music);
+  my $relation_block = &relation_block(%music);
 
-print "\n| ";
-foreach $chord (sort (keys %music)) {
-  my $padding = length("$music{$chord}{base} $music{$chord}{sig} ") - length($music{$chord}{num}) - 1;
-  print "$music{$chord}{num} ";
-  for (my $i=1 ; $i <= $padding ; $i++) {
-    print " ";
+  #$in_mode ||= "User provided scale";
+  if (! defined $in_mode) {
+    $in_mode = ($user_scale_name) ? $user_scale_name : "User provided scale" ;
+    #if (! defined $user_scale_name) {
+    #||= "User provided scale";
   }
-  print "| ";
+
+  my $output = << "  ENDOUT";
+
+  $in_key  -  $in_mode
+  
+  Scale Notes:   $scale_str
+
+  Progression:   $prog_str
+
+  Chords:
+
+$chord_block
+  
+  Progression Chart:
+
+$relation_block
+
+  ENDOUT
+  chomp $output;
+  say $output;
 }
 
-print "\n\n";
 
-# this is the worst bit of everything. guessing a lot
-say "  Progression Chart:";
-my $prog = <<END_PROG;
-                       $music{3}{num}  -  $music{6}{num}
-  $music{6}{num} -> $music{2}{num} -> $music{5}{num} <      ><       > $music{0}{num}
-                       $music{1}{num}  -  $music{4}{num}
-END_PROG
-say "$prog";
+sub print_guitar_boards {
+  my (%music) = @_;
 
-say "";
+  my $fret_width = 3;
+  my $max_fret_number = 15;
+
+  my @repeat_notes = @notes;
+  # double it up
+  push(@repeat_notes, @notes);
+
+  for my $chord (sort keys %music) {
+    # build printing array backwards
+    my $chord_notes = $music{$chord}{notes};
+    my @chord_notes = split(/\s+/, $chord_notes);
+    my @print_arr;
+    for my $tuning_key (@guitar_tuning) {
+      my $string;
+      # rotate note array left for each tuning key
+      my ($tuning_index) = grep {$tuning_key eq $repeat_notes[$_]} 0..$#repeat_notes; 
+      my @note_shift = &rotate_array_left($tuning_index, @repeat_notes);
+
+      for my $fret (0..$max_fret_number) {
+        my $difference = $fret_width - length $note_shift[$fret];
+        my $diffstr = "-" x $difference;
+        if ($note_shift[$fret] eq $chord_notes[0]) {
+          $string .= $root_color . $note_shift[$fret] . $reset . $diffstr . "|";
+        }
+        elsif ($note_shift[$fret] eq $chord_notes[1]) {
+          $string .= $third_color . $note_shift[$fret] . $reset . $diffstr . "|";
+        }
+        elsif ($note_shift[$fret] eq $chord_notes[2]) {
+          $string .= $fifth_color . $note_shift[$fret] . $reset . $diffstr . "|";
+        }
+        else {
+          $string .= "-" x $fret_width . "|"
+        }
+      }
+      $string .= "\n";
+      push(@print_arr, $string);
+    }
+    say "$music{$chord}{base} $music{$chord}{sig} - $music{$chord}{notes}";
+    my $number_str;
+    for my $i (0..$max_fret_number) {
+      my $difference = $fret_width - length($i);
+      my $diffstr = " " x ($difference + 1);
+      if (grep {$i == $_} @highlight_frets) {
+        $number_str .= $fret_color . $i . $reset . $diffstr;
+      } else {
+        $number_str .= $i . $diffstr;
+      }
+    }
+    $number_str .= "\n";
+    push(@print_arr, $number_str);
+    map {print} reverse @print_arr;
+    say "";
+  }
+}
+
+
+sub main {
+  &handle_args;
+  my @scale_notes = &shift_scales;
+  my @progression = &find_progression(@scale_notes);
+  my %music = &find_tonality(@progression);
+  &output_data(\@scale_notes, \%music);
+  &print_guitar_boards(%music) if $show_fingerboard;
+}
+
+
+
+&main;
+
