@@ -11,6 +11,16 @@ use Getopt::Long;			# handle arguments
 # TODO require some module so windoze understands
 # the ANSII color escape sequences
 
+# TODO be smarter about chords and shit.
+# like how to use a pentatonic scale here
+# pentatonic should have 5 chords in the progression
+# chords could still be measured by the 3,3; 3,4; 4,3; 4,4 relationships
+# if scalar @notes == 5
+  # if two notes are separated by 3/4
+  # do the right thing. 
+  # assume some 2nd/6th was between them ?
+# 
+
 #
 # Default Variables
 #
@@ -21,11 +31,21 @@ my $prog = basename($0);
 my @notes = ("A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#");
 # TODO flats optional instead of sharps?
 
-# step pattern and modes are related linearly
-my @step_pattern = qw(2 2 1 2 2 2 1);
-my @modes = qw(Ionian Dorian Phrygian Lydian Mixolydian Aeolian Locrian);
-
 # TODO a hash of modes that correlate to scale steps
+# all modes correspond to a number of steps in a scale
+my %mode_hash = (
+  'Ionian'		=> [2, 2, 1, 2, 2, 2, 1],
+  'Dorian'		=> [2, 1, 2, 2, 2, 1, 2],
+  'Phrygian'		=> [1, 2, 2, 2, 1, 2, 2],
+  'Lydian'		=> [2, 2, 2, 1, 2, 2, 1],
+  'Mixolydian'		=> [2, 2, 1, 2, 2, 1, 2],
+  'Aeolian'		=> [2, 1, 2, 2, 1, 2, 2],
+  'Locrian'		=> [1, 2, 2, 1, 2, 2, 1],
+
+  'Minor'		=> [2, 1, 2, 2, 1, 2, 2],
+  'Major'		=> [2, 2, 1, 2, 2, 2, 1],
+  'Super Locrian'	=> [1, 3, 1, 2, 1, 2, 2],
+);
 
 # numerals for chart representations
 my @numerals = qw (I II III IV V VI VII);
@@ -76,15 +96,15 @@ my %colors = (
 
 my %scale_colors = (
   '0' => $colors{BRED},
-  '1' => $colors{BLACK},
+  '1' => $colors{BBLACK},
   '2' => $colors{BYELLOW},
-  '3' => $colors{BLUE},
+  '3' => $colors{BBLUE},
   '4' => $colors{BGREEN},
-  '5' => $colors{MAJENTA},
-  '6' => $colors{CYAN},
+  '5' => $colors{BMAJENTA},
+  '6' => $colors{BCYAN},
 );
 
-my $fret_color = $colors{WHITE};
+my $fret_color = $colors{BWHITE};
 
 # expected input vars
 my ($in_key, $in_mode, @in_steps, $user_scale_name);
@@ -98,6 +118,8 @@ sub usage {
   my $color_str = join", ", @colors;
   $color_str =~ s/((\S+\s+){7})/$1\n/g;
   $color_str =~ s/\n/\n      /sg;
+
+  my $mode_str = join", ", keys %mode_hash;
 
   my $usage = <<"  END_USAGE";
 
@@ -116,8 +138,8 @@ Usage:
     @notes
 
   Mode:
-    [mode] can be any of:
-    @modes
+    [mode] can be any of: Major, Minor,
+    $mode_str
 
   Steps:
     ["quoted pattern"] can consist of any quoted and space
@@ -139,15 +161,10 @@ Additional Options
     Not limited to 6 strings.
     Default is "E A D G B E"
 
-  -root-color [COLOR]
-    Default is BRED
-  -third-color [COLOR]
-    Default is BYELLOW
-  -fifth-color [COLOR]
-    Default is BGREEN
-
-    Assign a specific color to the root/third/fifth notes, when
-    drawing the guitar fingerboard patterns.
+  -color-1 [COLOR] ... -color-7 [COLOR]
+    Assign a specific color to the given notes, when drawing the 
+    guitar fingerboard patterns. 
+    -color-1 is the root, -color-3 is the third, etc.
     Colors may be any of:
       $color_str
 
@@ -177,8 +194,17 @@ Examples:
 }
 
 sub check_required_args {		# handle leftover @ARGV stuff here if need be
+  &err("Invalid Key! Must be one of: " . join", ", @notes) unless defined $in_key;
+  &err("Invalid Key! Must be one of: " . join", ", @notes) unless grep {$in_key eq $_} @notes;
   if (! $in_mode && ! @in_steps) {
     &helps;
+  }
+  if (defined $in_mode) {
+    unless (grep {$in_mode =~ /^$_$/i} keys %mode_hash) {
+      &err("$prog requires a valid -key");
+    }
+  } else {
+    &err("$prog requires a valid -key");
   }
   if (@in_steps) {
     &err("Unexpected number of steps in -steps!") unless scalar @in_steps == 7;
@@ -193,7 +219,6 @@ sub parse_insteps {
 }
 
 sub parse_tuning {
-  # TODO
   my $tuning = $_[1];
   @guitar_tuning = ();
   for my $note (split(/\s+/, $tuning)) {
@@ -217,21 +242,24 @@ sub parse_colors {
 }
 
 sub handle_args {
-  if ( Getopt::Long::GetOptions(
+  Getopt::Long::GetOptions(
     'key=s' => \$in_key,
     'mode=s' => \$in_mode,
     'steps=s' => \&parse_insteps,
     'name=s' => \$user_scale_name,
     'fingerboards' => \$show_fingerboard,
     'guitar-tuning=s' => \&parse_tuning,
-    'root-color=s' => sub {&parse_colors(0, $_[1])},
-    'third-color=s' => sub {&parse_colors(2, $_[1])},
-    'fifth-color=s' => sub {&parse_colors(4, $_[1])},
+    'color-1=s' => sub {&parse_colors(0, $_[1])},
+    'color-2=s' => sub {&parse_colors(1, $_[1])},
+    'color-3=s' => sub {&parse_colors(2, $_[1])},
+    'color-4=s' => sub {&parse_colors(3, $_[1])},
+    'color-5=s' => sub {&parse_colors(4, $_[1])},
+    'color-6=s' => sub {&parse_colors(5, $_[1])},
+    'color-7=s' => sub {&parse_colors(6, $_[1])},
     'condense-boards' => \$condense_boards,
     'h|help' => \&usage,
-     ) )   {
-    &check_required_args;
-  }
+  );
+  &check_required_args;
 }
 
 
@@ -256,17 +284,20 @@ sub rotate_array_left {
 }
 
 sub shift_scales {
-
   # mode step selection
+  my @step_pattern;
+
   if (@in_steps) {
-    # no shifting needed
     @step_pattern = @in_steps;
   } else {
-    # figure out where we are
-    my ( $step_index )= grep {$modes[$_] =~ /$in_mode/i} 0..$#modes;
-    # get to the right mode pattern
-    @step_pattern = &rotate_array_left($step_index, @step_pattern);
+    for my $insensitive_check (keys %mode_hash) {
+      if ($insensitive_check =~ /$in_mode/i) {
+        @step_pattern = @{$mode_hash{$insensitive_check}};
+        $in_mode = $insensitive_check;
+      }
+    }
   }
+
 
   # get to the right note structure
   my ( $note_index )= grep {$notes[$_] =~ /$in_key/i} 0..$#notes;
@@ -299,12 +330,7 @@ sub find_progression {
     }
 
     my @adj_notes = &rotate_array_left($note_degree, @scale_notes);
-    #my @adj_notes = @scale_notes;
-    #for (my $i=0 ; $i < $note_degree ; $i++) { 
-    #  my $first = shift @adj_notes;
-    #  push (@adj_notes, $first);
-    #}
-  
+
     my @chord;
     $chord[0] = $adj_notes[0];
     $chord[1] = $adj_notes[2];
@@ -540,10 +566,12 @@ sub print_boards {
         my @one = @{$one};
         my @two = @{$two};
         # mash the two arrays together for printing.
-        # cannot rely on length() here, due to ANSI color escapes.
         my $buffer = 8;
+        # cannot rely on length() here, due to ANSI color escapes.
         my $width = ($fret_width + 1) * ($max_fret_number + 1);
         my $title_length = length($one[0]);
+        # accounting for unicode bs...
+        $title_length-- if $one[0] =~ /°/;
         my $title_buffer = " " x ($width + $buffer - $title_length);
         my $line_buffer = " " x $buffer;
         say $one[0] . $title_buffer . $two[0];
