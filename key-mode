@@ -19,6 +19,13 @@ use Getopt::Long;			# handle arguments
   # if two notes are separated by 3/4
   # do the right thing. 
   # assume some 2nd/6th was between them ?
+#
+#
+# hmmmm
+# maybe some other gabage
+# pairs of step patterns, 33, 34, 43, 44, and see what combinations can happen in a scale.
+# perhaps that's extensible... 7ths.. 33? 34? 43? 44?
+# 
 # 
 
 #
@@ -33,6 +40,7 @@ my @notes = ("A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#");
 
 # TODO a hash of modes that correlate to scale steps
 # all modes correspond to a number of steps in a scale
+# TODO make this an array so it's ordered.
 my %mode_hash = (
   'Ionian'		=> [2, 2, 1, 2, 2, 2, 1],
   'Dorian'		=> [2, 1, 2, 2, 2, 1, 2],
@@ -45,6 +53,9 @@ my %mode_hash = (
   'Minor'		=> [2, 1, 2, 2, 1, 2, 2],
   'Major'		=> [2, 2, 1, 2, 2, 2, 1],
   'Super Locrian'	=> [1, 3, 1, 2, 1, 2, 2],
+
+  'Harmonic Minor'	=> [2, 1, 2, 2, 1, 3, 1], 
+  #''	=> [], 
 );
 
 # numerals for chart representations
@@ -291,7 +302,7 @@ sub shift_scales {
     @step_pattern = @in_steps;
   } else {
     for my $insensitive_check (keys %mode_hash) {
-      if ($insensitive_check =~ /$in_mode/i) {
+      if ($insensitive_check =~ /^$in_mode$/i) {
         @step_pattern = @{$mode_hash{$insensitive_check}};
         $in_mode = $insensitive_check;
       }
@@ -434,14 +445,48 @@ sub chord_output {
 
 sub relation_block {
   my (%music) = @_;
+
+  my $pad = "    ";
+  my %h;
+  for my $num (sort keys %music) {
+    $h{$num} = $pad;
+    my $len = length($music{$num}{num});
+    $h{$num} =~ s/.{$len}$/$music{$num}{num}/;
+  }
+
   my $prog = <<"  END_PROG";
-                         $music{3}{num}  -  $music{6}{num}
-    $music{6}{num} -> $music{2}{num} -> $music{5}{num} <      ><       > $music{0}{num}
-                         $music{1}{num}  -  $music{4}{num}
+                           $h{3}  -- $h{6}
+    $h{6} -> $h{2} -> $h{5} <       ><       > $h{0}
+                            $h{1}  -- $h{4}
   END_PROG
   chomp $prog;
   return $prog;
 }
+
+sub relation_name_block {
+  my (%music) = @_;
+  say Dumper(\%music);
+
+  my $sp = " " x 7;
+
+  my $one = $music{0}{base} . " " . $music{0}{sig};
+  my $two = $music{1}{base} . " " . $music{1}{sig};
+  my $three = $music{2}{base} . " " . $music{2}{sig};
+  my $four = $music{3}{base} . " " . $music{3}{sig};
+  my $five = $music{4}{base} . " " . $music{4}{sig};
+  my $six = $music{5}{base} . " " . $music{5}{sig};
+  my $seven = $music{6}{base} . " " . $music{6}{sig};
+
+
+  my $prog = <<"  END_PROG";
+    $sp       $sp            $four  --  $seven 
+    $seven -> $three -> $six <  $sp  ><  $sp  > $one
+    $sp       $sp            $two  --  $five 
+  END_PROG
+  chomp $prog;
+  return $prog;
+}
+
 
 
 
@@ -460,6 +505,7 @@ sub output_data {
 
   my $chord_block = &chord_output(%music);
   my $relation_block = &relation_block(%music);
+  my $relation_name_block = &relation_name_block(%music);
 
   #$in_mode ||= "User provided scale";
   if (! defined $in_mode) {
@@ -481,6 +527,8 @@ $chord_block
   Progression Chart:
 
 $relation_block
+
+$relation_name_block
 
   ENDOUT
   chomp $output;
