@@ -465,7 +465,7 @@ sub relation_block {
 
 sub relation_name_block {
   my (%music) = @_;
-  say Dumper(\%music);
+  #say Dumper(\%music);
 
   my $sp = " " x 7;
 
