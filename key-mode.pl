@@ -3,11 +3,14 @@
 # a script to get information about musical scales
 
 use 5.010;				# say
+use utf8;				# box drawing
+use open ':std', ':encoding(UTF-8)';	# like perl -CS; utf8ify std streams
 use strict;				# good form
 use warnings;				# know when stuff is wrong
 use Data::Dumper;			# debug
 use File::Basename;			# know where the script lives
 use Getopt::Long;			# handle arguments
+
 # TODO require some module so windoze understands
 # the ANSII color escape sequences
 
@@ -19,6 +22,8 @@ use Getopt::Long;			# handle arguments
   # if two notes are separated by 3/4
   # do the right thing. 
   # assume some 2nd/6th was between them ?
+#
+# that and 8 note scales like bebop minor/dominant
 #
 #
 # hmmmm
@@ -68,6 +73,30 @@ my $max_fret_number = 15;
 my @guitar_tuning = ("E", "A", "D", "G", "B", "E");
 my @highlight_frets = qw(0 3 5 7 9 12 15);
 
+# keyboard options...
+my $show_keyboard;
+my $octaves = 3;
+my $keyWidth = 3;
+my $vert_bar = "\x{2503}";
+my @kbdNoteOrder = ("B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#");
+my @kbdFullNotes;
+map {push(@kbdFullNotes, @kbdNoteOrder)} 1..$octaves + 1;
+my %piano_keys;
+for my $note (@noteOrder) {
+  if ($note =~ /#$/) {
+    $piano_keys{$note}{COLOR} = $c{WHITE};
+    $piano_keys{$note}{BGCOLOR} = $c{BGBLACK};
+  } else {
+    $piano_keys{$note}{COLOR} = $c{BLACK};
+    $piano_keys{$note}{BGCOLOR} = $c{BGWHITE};
+  }
+}
+my $start_white_keys = $c{BLACK} . $c{BGWHITE}. " " x $keyWidth . $vert_bar . " " x ($keyWidth - 1) ;
+my $two_black_keys = $c{BGBLACK}. " " x $keyWidth . "$c{BGWHITE} $c{BGBLACK}" . " " x $keyWidth;
+my $three_black_keys = "$two_black_keys$c{BGWHITE} $c{BGBLACK}" . " " x $keyWidth;
+my $two_white_keys = $c{BGWHITE} . " " x ($keyWidth - 1) . $vert_bar . " " x ($keyWidth - 1);
+
+# colors
 my @colors = ('DEFAULT', 'BOLD', 'BLACK', 'RED', 'BLUE', 'YELLOW', 'GREEN',
               'MAJENTA', 'CYAN', 'WHITE', 'BBLACK', 'BRED', 'BBLUE',
               'BYELLOW', 'BGREEN', 'BMAJENTA', 'BCYAN', 'BWHITE', 'BGDEFAULT',
@@ -163,6 +192,15 @@ Additional Options
     Scale Name can be any quoted string.
     Provides the name to display when using a custom Step signature
 
+  -color-1 [COLOR] ... -color-7 [COLOR]
+    Assign a specific color to the given notes, when drawing the 
+    guitar fingerboard patterns. 
+    -color-1 is the root, -color-3 is the third, etc.
+    Colors may be any of:
+      $color_str
+
+Guitar Options
+
   -fingerboards
     For each chord in the scale, print a representation of a guitar
     figerboard, with the notes displayed
@@ -172,16 +210,16 @@ Additional Options
     Not limited to 6 strings.
     Default is "E A D G B E"
 
-  -color-1 [COLOR] ... -color-7 [COLOR]
-    Assign a specific color to the given notes, when drawing the 
-    guitar fingerboard patterns. 
-    -color-1 is the root, -color-3 is the third, etc.
-    Colors may be any of:
-      $color_str
-
   -condense-boards
     Print the guitar fingerboards in multiple columns
     Good for running with a wide terminal
+
+Keyboard Options
+
+  -keyboards
+    For each chord in the scale, print a representation of a piano
+    keyboard, with the notes highlighed on the keyboard
+
 
 Examples:
 
@@ -259,6 +297,7 @@ sub handle_args {
     'steps=s' => \&parse_insteps,
     'name=s' => \$user_scale_name,
     'fingerboards' => \$show_fingerboard,
+    'keyboards' => \$show_keyboard,
     'guitar-tuning=s' => \&parse_tuning,
     'color-1=s' => sub {&parse_colors(0, $_[1])},
     'color-2=s' => sub {&parse_colors(1, $_[1])},
@@ -642,6 +681,22 @@ sub print_boards {
 }
 
 
+
+
+sub show_keyboards {
+  my ($noteRef, $musicRef) = @_;
+  my @scaleNotes = @{$noteRef};
+  my %music = %{$musicRef};
+  say Dumper(\@scaleNotes);
+  say Dumper(\%music);
+  # print keyboard for each note of the scale
+  for my $key (sort keys %music) {
+    my @chordNotes = split(/\s+/, $music{$key}});
+    
+  }
+  exit;
+}
+
 sub main {
   &handle_args;
   my @scale_notes = &shift_scales;
@@ -652,6 +707,9 @@ sub main {
   if ($show_fingerboard) {
     my @fboard = &get_guitar_boards(\@scale_notes, \%music);
     &print_boards(@fboard);
+  }
+  if ($show_keyboard) {
+    &show_keyboards(\@scale_notes, \%music);
   }
 }
 
