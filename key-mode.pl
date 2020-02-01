@@ -112,14 +112,25 @@ my %colors = (
 );
 
 my %color_backgrounds = (
-  '30m' => $colors{BGYELLOW},
-  '31m' => $colors{BGYELLOW},
-  '32m' => $colors{BGRED},
-  '33m' => $colors{BGBLUE},
-  '34m' => $colors{BGRED},
-  '35m' => $colors{BGYELLOW},
-  '36m' => $colors{BGRED},
-  '37m' => $colors{BGGREEN},
+  '30m' => $colors{BGBLACK},
+  '31m' => $colors{BGRED},
+  '32m' => $colors{BGGREEN},
+  '33m' => $colors{BGYELLOW},
+  '34m' => $colors{BGBLUE},
+  '35m' => $colors{BGMAJENTA},
+  '36m' => $colors{BGCYAN},
+  '37m' => $colors{BGWHITE},
+);
+
+my %color_font_bg_correlator = (
+  '30m' => $colors{WHITE},
+  '31m' => $colors{WHITE},
+  '32m' => $colors{WHITE},
+  '33m' => $colors{BLACK},
+  '34m' => $colors{WHITE},
+  '35m' => $colors{WHITE},
+  '36m' => $colors{BLACK},
+  '37m' => $colors{BLACK},
 );
 
 my %scale_colors = (
@@ -138,7 +149,7 @@ my $fret_color = $colors{BWHITE};
 my $show_keyboard;
 my $octaves = 3;
 my $keyWidth = 3;
-my $vert_bar = "\x{2503}";
+my $vert_bar = "$colors{BGWHITE}$colors{BLACK}\x{2503}";
 my @kbdNoteOrder = ("B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#");
 my @kbdFullNotes;
 map {push(@kbdFullNotes, @kbdNoteOrder)} 1..$octaves + 1;
@@ -736,12 +747,12 @@ sub array_search {
   return -1;
 }
 
-sub getbgColor {
+sub getFgBgColor {
   my ($color) = @_;
   if ($color =~ /\e\[(?:1;)?(\d+m)/) {
     my $colorBase = $1;
-    if (exists $color_backgrounds{$colorBase}) {
-      return $color_backgrounds{$colorBase};
+    if (exists $color_backgrounds{$colorBase} && exists $color_font_bg_correlator{$colorBase}) {
+      return ($color_backgrounds{$colorBase}, $color_font_bg_correlator{$colorBase});
     }
   }
 }
@@ -759,8 +770,7 @@ sub mid_line_pattern {
     my $note = shift @notes;
     if (grep {$note eq $_} @noteArr) {
       my $colorIndex = &array_search($note, @noteArr);
-      my $fgColor = $noteColors[$colorIndex];
-      my $bgColor = &getbgColor($fgColor);
+      my ($bgColor, $fgColor) = &getFgBgColor($noteColors[$colorIndex]);
       my $colorSet = $fgColor . $bgColor;
       # highlight note
       my $localKeyWidth = $keyWidth;
@@ -795,8 +805,9 @@ sub bottom_line_pattern {
     #my $colorSet = $piano_keys{$note}{COLOR} . $piano_keys{$note}{BGCOLOR};
     if (grep {$note eq $_} @noteHighlight) {
       my $colorIndex = &array_search($note, @noteHighlight);
-      my $fgColor = $noteColors[$colorIndex];
-      my $bgColor = &getbgColor($fgColor);
+      #my $fgColor = $noteColors[$colorIndex];
+      #my $bgColor = &getbgColor($fgColor);
+      my ($bgColor, $fgColor) = &getFgBgColor($noteColors[$colorIndex]);
       my $colorSet = $fgColor . $bgColor;
       my $text = " " x $keyWidth;
       my $startSpaces = int($keyWidth / 2);
@@ -867,6 +878,10 @@ sub show_keyboards {
   }
 }
 
+sub gen_one_keyboard {
+  my ($top, $mid, $bottom) = @_;
+}
+
 sub gen_keyboards {
   my ($noteRef, $musicRef) = @_;
   my @scaleNotes = @{$noteRef};
@@ -876,7 +891,6 @@ sub gen_keyboards {
     my @txt;
     my @chordNotes = split(/\s+/, $music{$key}{notes});
     my @colors = ($scale_colors{0},$scale_colors{2},$scale_colors{4});
-    my %colors;
     my $top_line = &top_line_pattern;
     my $mid_line = &mid_line_pattern(\@chordNotes, \@colors);
     my $bottom_line = &bottom_line_pattern(\@chordNotes, \@colors);
@@ -888,6 +902,16 @@ sub gen_keyboards {
     push(@txt, $bottom_line) for 1..3;
     push(@txt_arr, \@txt);
   }
+  {
+    my @colors = map {$scale_colors{$_}} sort keys %scale_colors;
+    my @txt;
+    push(@txt, "");
+    push(@txt, "Key: " . $music{0}{base} . " - Scale: " . $in_mode);
+    push(@txt, &top_line_pattern) for 1..1;
+    push(@txt, &mid_line_pattern(\@scaleNotes, \@colors)) for 1..3;
+    push(@txt, &bottom_line_pattern(\@scaleNotes, \@colors)) for 1..3;
+    push(@txt_arr, \@txt);
+  }
   return (@txt_arr);
 }
 
@@ -896,7 +920,6 @@ sub main {
   my @scale_notes = &shift_scales;
   my @progression = &find_progression(@scale_notes);
   my %music = &find_tonality(@progression);
-  #say Dumper(\%music);
   &output_data(\@scale_notes, \%music);
   if ($show_fingerboard) {
     my @fboard = &get_guitar_boards(\@scale_notes, \%music);
