@@ -214,6 +214,10 @@ Additional Options
     Colors may be any of:
       $color_str
 
+  -condense
+    Print the guitar fingerboards or the piano keyboards in multiple columns.
+    Good for running with a wide terminal
+
 Guitar Options
 
   -fingerboards
@@ -224,10 +228,6 @@ Guitar Options
     Open notes can be any quoted list of notes, low to high.
     Not limited to 6 strings.
     Default is "E A D G B E"
-
-  -condense-boards
-    Print the guitar fingerboards in multiple columns
-    Good for running with a wide terminal
 
 Keyboard Options
 
@@ -249,6 +249,12 @@ Examples:
  
   Get info and fingerboard patterns for an 8 string guitar with weird tuning:
     $prog -key B -mode Mixolydian -fingerboards -guitar-tuning "E A D A D G B E"
+ 
+  Get condensed fretboard info about a scale
+    $prog -key D -mode Dorian -fingerboards -condense
+ 
+  Get info about a keyboard, condensed
+    $prog -key G -mode Phrygian -keyboards -condense
  
   END_USAGE
 
@@ -321,7 +327,7 @@ sub handle_args {
     'color-5=s' => sub {&parse_colors(4, $_[1])},
     'color-6=s' => sub {&parse_colors(5, $_[1])},
     'color-7=s' => sub {&parse_colors(6, $_[1])},
-    'condense-boards' => \$condense_boards,
+    'condense' => \$condense_boards,
     'h|help' => \&usage,
   );
   &check_required_args;
@@ -806,14 +812,57 @@ sub bottom_line_pattern {
   return $ret;
 }
 
+sub length_without_color {
+  my ($txt) = @_;
+  $txt =~ s/\e\[(?:1;)?\d+m//g;
+  return length $txt;
+}
+
+sub column_color_txt_arr {
+  my ($textAref, $sep) = @_;
+  my @txtsArr = @{$textAref};
+  my $longestLine = 0;
+  for my $lines (@txtsArr) {
+    map {$longestLine = &length_without_color($_) if &length_without_color($_) > $longestLine} @$lines;
+  }
+  my $half = int((scalar @txtsArr + 1) / 2);
+  for my $index (0..$half) {
+    my $idxA = $index * 2;
+    my $idxB = $idxA + 1;
+    if (defined $txtsArr[$idxB]) {
+      my @ar1 = @{$txtsArr[$idxA]};
+      my @ar2 = @{$txtsArr[$idxB]};
+      for my $arIDx (0..$#ar1) {
+        my $txt1 = $ar1[$arIDx];
+        my $txt2 = $ar2[$arIDx];
+        my $spaces = " " x ($longestLine - &length_without_color($txt1));
+        say $txt1 . $spaces . $sep . $txt2 ;
+      }
+    } else {
+      map {say} @{$txtsArr[$idxA]};
+    }
+  }
+}
+
 sub show_keyboards {
+  my ($noteRef, $musicRef) = @_;
+  my @text = &gen_keyboards($noteRef, $musicRef);
+  if ($condense_boards) {
+    &column_color_txt_arr(\@text, "    ");
+  } else {
+    for my $board (@text) {
+      map {say} @{$board};
+    }
+  }
+}
+
+sub gen_keyboards {
   my ($noteRef, $musicRef) = @_;
   my @scaleNotes = @{$noteRef};
   my %music = %{$musicRef};
-  # print keyboard for each note of the scale
   my @txt_arr;
   for my $key (sort keys %music) {
-    my $txt;
+    my @txt;
     my @chordNotes = split(/\s+/, $music{$key}{notes});
     my @colors = ($scale_colors{0},$scale_colors{2},$scale_colors{4});
     my %colors;
@@ -821,11 +870,19 @@ sub show_keyboards {
     my $mid_line = &mid_line_pattern(\@chordNotes, \@colors);
     my $bottom_line = &bottom_line_pattern(\@chordNotes, \@colors);
 
-    say "\n" . $music{$key}{base} . " " . $music{$key}{sig}  . "\n";
-    say $top_line for 1..2;
-    say $mid_line for 1..3;
-    say $bottom_line for 1..3;
+    #say "\n" . $music{$key}{base} . " " . $music{$key}{sig}  . "\n";
+    push(@txt, "");
+    push(@txt, $music{$key}{base} . " " . $music{$key}{sig});
+    push(@txt, "");
+    #say $top_line for 1..2;
+    push(@txt, $top_line) for 1..2;
+    #say $mid_line for 1..3;
+    push(@txt, $mid_line) for 1..3;
+    #say $bottom_line for 1..3;
+    push(@txt, $bottom_line) for 1..3;
+    push(@txt_arr, \@txt);
   }
+  return (@txt_arr);
 }
 
 sub main {
