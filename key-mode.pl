@@ -503,6 +503,43 @@ sub chord_output {
   return $outstr;
 }
 
+sub box_ref {
+  my $txt = <<"  EOF";
+   ┏━┓
+   ┃ ┃
+   ┗━┛
+    │
+   ┏┷┓
+   ┨ ┠──
+   ┗┯┛
+ ╳ ╱╲
+     ├
+
+  EOF
+}
+
+sub SteveMugglinProgressionBlockSimple {
+  my $txt = <<"  EOF";
+   ┏━━━┓
+   ┃ 2 ┠──┐
+   ┗━━━┛  
+  EOF
+}
+
+sub progression_block_builder {
+  # TODO this should take an input of 7 (or more?) things,
+  # which will then be translated into a text style flow chart
+  # TODO maybe use more box drawing characters.
+  # TODO make a better progression chart
+  # based on http://www.angelfire.com/music/HarpOn/image/chordprogressionmap.gif
+  # by Steve Mugglin
+  #if ($extendedProgression) {
+  #  &SteveMugglinProgressionBlockSimple;
+  #} else {
+  #  
+  #}
+}
+
 sub relation_block {
   my (%music) = @_;
 
@@ -592,6 +629,7 @@ $relation_name_block
 
   ENDOUT
   chomp $output;
+  chomp $output if ($show_fingerboard || $show_keyboard);
   say $output;
 }
 
@@ -657,6 +695,7 @@ sub get_guitar_boards {
     }
     unshift(@print_arr, $number_str);
     unshift(@print_arr, "$music{$chord}{base} $music{$chord}{sig} - $music{$chord}{notes}");
+    unshift(@print_arr, "");
     push (@fingerboards, \@print_arr);
   }
   return @fingerboards;
@@ -666,34 +705,7 @@ sub get_guitar_boards {
 sub print_boards {
   my @fingerboards = @_;
   if ($condense_boards) {
-    # TODO this premise might be flawed. should
-    # probably make logic to just do this...
-    # making pairs of boards
-    while (scalar(@fingerboards)) {
-      my $one = shift @fingerboards;
-      my $two = shift @fingerboards;
-      if ($two) {
-        my @one = @{$one};
-        my @two = @{$two};
-        # mash the two arrays together for printing.
-        my $buffer = 8;
-        # cannot rely on length() here, due to ANSI color escapes.
-        my $width = ($fret_width + 1) * ($max_fret_number + 1);
-        my $title_length = length($one[0]);
-        # accounting for unicode bs... diminished chords
-        $title_length-- if $one[0] =~ /°/;
-        my $title_buffer = " " x ($width + $buffer - $title_length);
-        my $line_buffer = " " x $buffer;
-        say $one[0] . $title_buffer . $two[0];
-        for (1..$#one) {
-          say $one[$_] . $line_buffer . $two[$_];
-        }
-        say "";
-      } else {
-        map {say} @$one;
-        say "";
-      }
-    }
+    &column_color_txt_arr(\@fingerboards, "    ");
   } else {
     for my $aref (@fingerboards) {
       my @arr = @{$aref};
@@ -702,7 +714,6 @@ sub print_boards {
     }
   }
 }
-
 
 
 sub top_line_pattern {
@@ -870,15 +881,10 @@ sub gen_keyboards {
     my $mid_line = &mid_line_pattern(\@chordNotes, \@colors);
     my $bottom_line = &bottom_line_pattern(\@chordNotes, \@colors);
 
-    #say "\n" . $music{$key}{base} . " " . $music{$key}{sig}  . "\n";
     push(@txt, "");
     push(@txt, $music{$key}{base} . " " . $music{$key}{sig});
-    push(@txt, "");
-    #say $top_line for 1..2;
-    push(@txt, $top_line) for 1..2;
-    #say $mid_line for 1..3;
+    push(@txt, $top_line) for 1..1;
     push(@txt, $mid_line) for 1..3;
-    #say $bottom_line for 1..3;
     push(@txt, $bottom_line) for 1..3;
     push(@txt_arr, \@txt);
   }
