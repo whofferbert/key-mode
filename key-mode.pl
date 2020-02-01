@@ -73,29 +73,6 @@ my $max_fret_number = 15;
 my @guitar_tuning = ("E", "A", "D", "G", "B", "E");
 my @highlight_frets = qw(0 3 5 7 9 12 15);
 
-# keyboard options...
-my $show_keyboard;
-my $octaves = 3;
-my $keyWidth = 3;
-my $vert_bar = "\x{2503}";
-my @kbdNoteOrder = ("B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#");
-my @kbdFullNotes;
-map {push(@kbdFullNotes, @kbdNoteOrder)} 1..$octaves + 1;
-my %piano_keys;
-for my $note (@noteOrder) {
-  if ($note =~ /#$/) {
-    $piano_keys{$note}{COLOR} = $c{WHITE};
-    $piano_keys{$note}{BGCOLOR} = $c{BGBLACK};
-  } else {
-    $piano_keys{$note}{COLOR} = $c{BLACK};
-    $piano_keys{$note}{BGCOLOR} = $c{BGWHITE};
-  }
-}
-my $start_white_keys = $c{BLACK} . $c{BGWHITE}. " " x $keyWidth . $vert_bar . " " x ($keyWidth - 1) ;
-my $two_black_keys = $c{BGBLACK}. " " x $keyWidth . "$c{BGWHITE} $c{BGBLACK}" . " " x $keyWidth;
-my $three_black_keys = "$two_black_keys$c{BGWHITE} $c{BGBLACK}" . " " x $keyWidth;
-my $two_white_keys = $c{BGWHITE} . " " x ($keyWidth - 1) . $vert_bar . " " x ($keyWidth - 1);
-
 # colors
 my @colors = ('DEFAULT', 'BOLD', 'BLACK', 'RED', 'BLUE', 'YELLOW', 'GREEN',
               'MAJENTA', 'CYAN', 'WHITE', 'BBLACK', 'BRED', 'BBLUE',
@@ -134,6 +111,17 @@ my %colors = (
   'BGWHITE'        => "\e[47m"
 );
 
+my %color_backgrounds = (
+  '30m' => $colors{BGYELLOW},
+  '31m' => $colors{BGYELLOW},
+  '32m' => $colors{BGRED},
+  '33m' => $colors{BGBLUE},
+  '34m' => $colors{BGRED},
+  '35m' => $colors{BGYELLOW},
+  '36m' => $colors{BGRED},
+  '37m' => $colors{BGGREEN},
+);
+
 my %scale_colors = (
   '0' => $colors{BRED},
   '1' => $colors{BBLACK},
@@ -146,8 +134,35 @@ my %scale_colors = (
 
 my $fret_color = $colors{BWHITE};
 
+# keyboard options...
+my $show_keyboard;
+my $octaves = 3;
+my $keyWidth = 3;
+my $vert_bar = "\x{2503}";
+my @kbdNoteOrder = ("B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#");
+my @kbdFullNotes;
+map {push(@kbdFullNotes, @kbdNoteOrder)} 1..$octaves + 1;
+my %piano_keys;
+for my $note (@kbdNoteOrder) {
+  if ($note =~ /#$/) {
+    $piano_keys{$note}{COLOR} = $colors{WHITE};
+    $piano_keys{$note}{BGCOLOR} = $colors{BGBLACK};
+  } else {
+    $piano_keys{$note}{COLOR} = $colors{BLACK};
+    $piano_keys{$note}{BGCOLOR} = $colors{BGWHITE};
+  }
+}
+my $start_white_keys = $colors{BLACK} . $colors{BGWHITE}. " " x $keyWidth . $vert_bar . " " x ($keyWidth - 1) ;
+my $two_black_keys = $colors{BGBLACK}. " " x $keyWidth . "$colors{BGWHITE} $colors{BGBLACK}" . " " x $keyWidth;
+my $three_black_keys = "$two_black_keys$colors{BGWHITE} $colors{BGBLACK}" . " " x $keyWidth;
+my $two_white_keys = $colors{BGWHITE} . " " x ($keyWidth - 1) . $vert_bar . " " x ($keyWidth - 1);
+
+
+
 # expected input vars
 my ($in_key, $in_mode, @in_steps, $user_scale_name);
+
+
 
 #
 # Functions
@@ -645,6 +660,8 @@ sub get_guitar_boards {
 sub print_boards {
   my @fingerboards = @_;
   if ($condense_boards) {
+    # TODO this premise might be flawed. should
+    # probably make logic to just do this...
     # making pairs of boards
     while (scalar(@fingerboards)) {
       my $one = shift @fingerboards;
@@ -657,7 +674,7 @@ sub print_boards {
         # cannot rely on length() here, due to ANSI color escapes.
         my $width = ($fret_width + 1) * ($max_fret_number + 1);
         my $title_length = length($one[0]);
-        # accounting for unicode bs...
+        # accounting for unicode bs... diminished chords
         $title_length-- if $one[0] =~ /°/;
         my $title_buffer = " " x ($width + $buffer - $title_length);
         my $line_buffer = " " x $buffer;
@@ -682,19 +699,133 @@ sub print_boards {
 
 
 
+sub top_line_pattern {
+  my $return;
+  $return .= $start_white_keys;
+  for (1..$octaves) {
+    $return .= $two_black_keys; 
+    $return .= $two_white_keys;
+    $return .= $three_black_keys;
+    $return .= $two_white_keys;
+  }
+  $return .= " $reset";
+}
+
+sub array_search {
+  my ($elem, @arr) = @_;
+  for (0..$#arr) {
+    return $_ if $arr[$_] eq $elem;
+  }
+  return -1;
+}
+
+sub getbgColor {
+  my ($color) = @_;
+  if ($color =~ /\e\[(?:1;)?(\d+m)/) {
+    my $colorBase = $1;
+    if (exists $color_backgrounds{$colorBase}) {
+      return $color_backgrounds{$colorBase};
+    }
+  }
+}
+
+sub mid_line_pattern {
+  my ($noteArrRef, $colorArrRef) = @_;
+  my @noteArr = @{$noteArrRef};
+  my @noteColors = @{$colorArrRef};
+  my $line = &top_line_pattern;
+  my $ret;
+  my @notes = @kbdFullNotes;
+  while ($line =~ /(?:(.*?)(\s+))/g) {
+    my $matchText = $1;
+    my $matchSpaces = $2;
+    my $note = shift @notes;
+    if (grep {$note eq $_} @noteArr) {
+      my $colorIndex = &array_search($note, @noteArr);
+      my $fgColor = $noteColors[$colorIndex];
+      my $bgColor = &getbgColor($fgColor);
+      my $colorSet = $fgColor . $bgColor;
+      # highlight note
+      my $localKeyWidth = $keyWidth;
+      # handle highlighting keys (or not) if white and mid
+      $localKeyWidth = length $matchSpaces;# if length $matchSpaces == 1;
+      my $text = " " x $localKeyWidth;
+      my $startSpaces = int($localKeyWidth / 2);
+      $startSpaces++ if $startSpaces == 0;
+      # display note names?
+      $text =~ s/( ){$startSpaces}(.*)/$1$note$2/ if $note =~ /#$/;
+      $text =~ s/(.{$localKeyWidth}).*/$1/;
+      $ret .= $matchText . $colorSet . $text;
+    } else {
+      # just default stuff
+      my $colorSet = $piano_keys{$note}{COLOR} . $piano_keys{$note}{BGCOLOR};
+      $ret .= $colorSet . $matchText . " " x length($matchSpaces);
+    }
+  }
+  $ret .= $reset;
+  return $ret;
+}
+
+sub bottom_line_pattern {
+  my ($noteAref, $colorAref) = @_;
+  my @noteHighlight = @{$noteAref};
+  my @noteColors = @{$colorAref};
+  my @notes = grep {$_ !~ /#$/} @kbdFullNotes;
+  my $ret = "$colors{BLACK}$colors{BGWHITE}";
+  my $i = 0;
+  for (1..$octaves * 7 + 2) {
+    my $note = shift @notes;
+    #my $colorSet = $piano_keys{$note}{COLOR} . $piano_keys{$note}{BGCOLOR};
+    if (grep {$note eq $_} @noteHighlight) {
+      my $colorIndex = &array_search($note, @noteHighlight);
+      my $fgColor = $noteColors[$colorIndex];
+      my $bgColor = &getbgColor($fgColor);
+      my $colorSet = $fgColor . $bgColor;
+      my $text = " " x $keyWidth;
+      my $startSpaces = int($keyWidth / 2);
+      $startSpaces++ if $startSpaces == 0;
+      $text =~ s/( ){$startSpaces}(.*)/$1$note$2/;
+      $text =~ s/(.{$keyWidth}).*/$1/;
+      if ($i > 0) {
+        $ret .= $vert_bar . $colorSet . $text;
+      } else {
+        $ret .= $colorSet . $text;
+      }
+    } else {
+      # normal note
+      my $colorSet = $piano_keys{$note}{COLOR} . $piano_keys{$note}{BGCOLOR};
+      if ($i > 0) {
+        $ret .= $colorSet . $vert_bar . " " x $keyWidth;
+      } else {
+        $ret .= $colorSet . " " x $keyWidth;
+      }
+    } 
+    $i++;
+  }
+  $ret .= $reset;
+  return $ret;
+}
 
 sub show_keyboards {
   my ($noteRef, $musicRef) = @_;
   my @scaleNotes = @{$noteRef};
   my %music = %{$musicRef};
-  say Dumper(\@scaleNotes);
-  say Dumper(\%music);
   # print keyboard for each note of the scale
+  my @txt_arr;
   for my $key (sort keys %music) {
-    my @chordNotes = split(/\s+/, $music{$key}});
-    
+    my $txt;
+    my @chordNotes = split(/\s+/, $music{$key}{notes});
+    my @colors = ($scale_colors{0},$scale_colors{2},$scale_colors{4});
+    my %colors;
+    my $top_line = &top_line_pattern;
+    my $mid_line = &mid_line_pattern(\@chordNotes, \@colors);
+    my $bottom_line = &bottom_line_pattern(\@chordNotes, \@colors);
+
+    say "\n" . $music{$key}{base} . " " . $music{$key}{sig}  . "\n";
+    say $top_line for 1..2;
+    say $mid_line for 1..3;
+    say $bottom_line for 1..3;
   }
-  exit;
 }
 
 sub main {
@@ -716,4 +847,3 @@ sub main {
 
 
 &main;
-
