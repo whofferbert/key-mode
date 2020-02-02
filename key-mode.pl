@@ -901,6 +901,8 @@ sub relation_block {
     my $len = length($music{$num}{num});
     $h{$num} =~ s/.{$len}$/$music{$num}{num}/;
   }
+  
+  # TODO might need better handling in 8 note scales...
   my @chords = ($h{0}, $h{1}, $h{2}, $h{3}, $h{4}, $h{5}, $h{6});  
   my $prog = &SteveMugglinProgressionBlockFlat(\@chords, $scaleRef);
   chomp $prog;
@@ -908,18 +910,49 @@ sub relation_block {
 }
 
 
-# TODO this needs better handling in 8 note scales
+sub closest_mode {
+  my ($scaleRef) = @_;
+  my @scale = @{$scaleRef};
+  my @indexNotes = &rotate_array_left(&array_search($scale[0], @notes), @notes);
+  for my $mode (sort keys %mode_hash) {
+    my @steps = @{$mode_hash{$mode}};
+    next if scalar @steps > 7;
+    my @checkNotes; 
+    my $index = 0;
+    push(@checkNotes, $indexNotes[$index]);
+    for my $step (@steps) {
+      $index+=$step;
+      if ($index > $#indexNotes) {
+        $index = $index - $#indexNotes - 1;
+      }
+      push(@checkNotes, $indexNotes[$index]);
+    }
+    my $found = 1;
+    for my $note (@checkNotes) {
+      $found = 0 unless grep {$note eq $_} @scale;
+    }
+    return @checkNotes if $found == 1;
+  }
+}
+
+
+# TODO this really needs better handling in 8 note scales
 sub relation_name_block {
   my ($musicRef, $scaleRef) = @_;
   my %music = %{$musicRef};
-  my $one = $music{0}{base} . " " . $music{0}{sig};
-  my $two = $music{1}{base} . " " . $music{1}{sig};
-  my $three = $music{2}{base} . " " . $music{2}{sig};
-  my $four = $music{3}{base} . " " . $music{3}{sig};
-  my $five = $music{4}{base} . " " . $music{4}{sig};
-  my $six = $music{5}{base} . " " . $music{5}{sig};
-  my $seven = $music{6}{base} . " " . $music{6}{sig};
-  my @chords = ($one, $two, $three, $four, $five, $six, $seven);
+  #say Dumper(\$scaleRef); exit;
+  my @chords;
+  if (exists $music{7}) {
+    my @closestNotes = &closest_mode($scaleRef);
+    for my $chord (sort keys %music) {
+      if (grep {$_ eq $music{$chord}{base}} @closestNotes) {
+        push(@chords, $music{$chord}{base} . " " . $music{$chord}{sig});
+      }
+    }
+  } else {
+    map {$chords[$_] = $music{$_}{base} . " " . $music{$_}{sig}} 0..6;
+  }
+  
   my $prog = &SteveMugglinProgressionBlockFlat(\@chords, $scaleRef);
   chomp $prog;
   return split(/\n/, $prog);
