@@ -68,9 +68,8 @@ my %mode_hash = (
   #''	=> [], 
 );
 
-# numerals for chart representations
-#my @numerals = qw (I II III IV V VI VII);
-my @numerals = qw (I II III IV V VI VII VIII);
+# numerals for chart representations, extra for random scales?
+my @numerals = qw (I II III IV V VI VII VIII IX X);
 
 # guitar options...
 my ($show_fingerboard, $condense_boards);
@@ -165,7 +164,6 @@ my $vert_bar = $colors{BGWHITE} . $colors{BBLACK} . "\x{2503}";
 my @kbdNoteOrder = ("B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#");
 my @kbdNoteOrderFlat = ("B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb");
 my @kbdFullNotes;
-#map {push(@kbdFullNotes, @kbdNoteOrder)} 1..$octaves + 1;
 my %piano_keys;
 my $start_white_keys = $colors{BLACK} . $colors{BGWHITE}. " " x $keyWidth . $vert_bar . " " x ($keyWidth - 1) ;
 my $two_black_keys = $colors{BGBLACK}. " " x $keyWidth . "$colors{BGWHITE} $colors{BGBLACK}" . " " x $keyWidth;
@@ -401,6 +399,28 @@ sub warn {
   say STDERR $msg;
 }
 
+sub centerStr {
+  my ($str, $len, $pad) = @_;
+  $pad //= " ";
+  my $pre = $pad x int(($len - length($str) + 1) / 2);
+  my $post = $pad x int(($len - length($str)) / 2);
+  return $pre . $str . $post;
+}
+
+sub longestString {
+  my $len = 0;
+  map {my $c = length($_);$len = $c if $c > $len} @_;
+  return $len;
+}
+
+sub array_search {
+  my ($elem, @arr) = @_;
+  for (0..$#arr) {
+    return $_ if $arr[$_] eq $elem;
+  }
+  return -1;
+}
+
 sub rotate_array_left {
   my ($amount, @array) = @_;
   for (my $i=0 ; $i < $amount ; $i++) { 
@@ -409,6 +429,47 @@ sub rotate_array_left {
   }
   return (@array);
 }
+
+sub length_without_color {
+  my ($txt) = @_;
+  $txt =~ s/$ansiColorRegex//g;
+  return length $txt;
+}
+
+sub column_color_txt_arr {
+  my ($textAref, $sep) = @_;
+  my @txtsArr = @{$textAref};
+  my $longestLine = 0;
+  #for my $lines (@txtsArr) {
+  for my $lines ($txtsArr[0]) {
+    map {$longestLine = &length_without_color($_) if &length_without_color($_) > $longestLine} @$lines;
+  }
+  my $half = int((scalar @txtsArr + 1) / 2);
+  for my $index (0..$half) {
+    my $idxA = $index * 2;
+    my $idxB = $idxA + 1;
+    if (defined $txtsArr[$idxB]) {
+      my @ar1 = @{$txtsArr[$idxA]};
+      my @ar2 = @{$txtsArr[$idxB]};
+      for my $arIDx (0..$#ar1) {
+        my $txt1 = $ar1[$arIDx];
+        my $txt2 = $ar2[$arIDx];
+        my $spaces = " " x ($longestLine - &length_without_color($txt1));
+        say $txt1 . $spaces . $sep . $txt2 ;
+      }
+    } else {
+      map {say} @{$txtsArr[$idxA]};
+    }
+  }
+}
+
+# 
+# 
+# 
+# Music stuff 
+# 
+# 
+# 
 
 sub shift_scales {
   # mode step selection
@@ -566,6 +627,10 @@ sub find_tonality {
   return %music;
 }
 
+
+#
+# this is the chord block diagram
+#
 sub chord_output {
   my (%music) = @_;
 
@@ -582,7 +647,6 @@ sub chord_output {
   foreach my $chord (sort (keys %music)) {
     $outstr .= "$music{$chord}{notes}";
     my $padding = length("$music{$chord}{base} $music{$chord}{sig} ") - length($music{$chord}{notes});
-    #$padding-- if ($music{$chord}{sig} eq "Dim °");
     for (my $i=1 ; $i <= $padding ; $i++) {
       $outstr .= " ";
     }
@@ -602,20 +666,15 @@ sub chord_output {
   return $outstr;
 }
 
-
-sub centerStr {
-  my ($str, $len, $pad) = @_;
-  $pad //= " ";
-  my $pre = $pad x int(($len - length($str) + 1) / 2);
-  my $post = $pad x int(($len - length($str)) / 2);
-  return $pre . $str . $post;
-}
-
-sub longestString {
-  my $len = 0;
-  map {my $c = length($_);$len = $c if $c > $len} @_;
-  return $len;
-}
+#
+#
+# The following 5 subs are for doing regex replacements on the
+# built in block diagram, based on what needs to go in it.
+#
+# If you have a better idea, please implement it. Until then:
+# long live regex.
+#
+#
 
 sub smBlock1Horiz {
   my ($txt, $fifth, $second, $seventh) = @_;
@@ -720,7 +779,6 @@ sub smBlock4Horiz {
   $txt =~ s/^(.*?┺)(━┯━┛)/$1$bars$2/m;
 
   $txt =~ s/^(.*?┏)(┷┷━┓)/$1$bars$2/mg;
-  #$txt =~ s/^(.*?┃)   ┃/$1$emptypad┃/m;
   $txt =~ s/^(.*?┨) 5 ┠/$1$fivepad┃/m;
   $txt =~ s/^(.*?┗)(━━━┛)/$1$bars$2/m;
 
@@ -757,6 +815,7 @@ sub smBlock5Horiz {
 }
 
 sub SteveMugglinProgressionBlockFlat {
+  # TODO color
   my ($chordRef, $noteRef) = @_;
   # should be references to arrays of text in the right order
   my @chords = @{$chordRef};
@@ -788,6 +847,7 @@ sub SteveMugglinProgressionBlockFlat {
   return $newtxt;
 }
 
+# TODO unused sub, remove?
 sub SteveMugglinProgressionBlock {
   my ($chordRef, $noteRef) = @_;
   # chordRef = array of strings "E Minor" or "iim"
@@ -825,30 +885,27 @@ sub SteveMugglinProgressionBlock {
   #say $txt;
 }
 
+
 sub relation_block {
   my ($musicRef, $scaleRef) = @_;
   my %music = %{$musicRef};
-
   my %h;
   for my $num (sort keys %music) {
     $h{$num} = "    ";
     my $len = length($music{$num}{num});
     $h{$num} =~ s/.{$len}$/$music{$num}{num}/;
   }
-
   my @chords = ($h{0}, $h{1}, $h{2}, $h{3}, $h{4}, $h{5}, $h{6});  
-
   my $prog = &SteveMugglinProgressionBlockFlat(\@chords, $scaleRef);
   chomp $prog;
   return split(/\n/, $prog);
 }
 
+
+# TODO this needs better handling in 8 note scales
 sub relation_name_block {
   my ($musicRef, $scaleRef) = @_;
   my %music = %{$musicRef};
-
-  # TODO this needs better handling in 8 note scales
-
   my $one = $music{0}{base} . " " . $music{0}{sig};
   my $two = $music{1}{base} . " " . $music{1}{sig};
   my $three = $music{2}{base} . " " . $music{2}{sig};
@@ -856,15 +913,11 @@ sub relation_name_block {
   my $five = $music{4}{base} . " " . $music{4}{sig};
   my $six = $music{5}{base} . " " . $music{5}{sig};
   my $seven = $music{6}{base} . " " . $music{6}{sig};
-
   my @chords = ($one, $two, $three, $four, $five, $six, $seven);
-
   my $prog = &SteveMugglinProgressionBlockFlat(\@chords, $scaleRef);
   chomp $prog;
   return split(/\n/, $prog);
 }
-
-
 
 
 # take the info and spit it out in a useful way
@@ -872,30 +925,29 @@ sub output_data {
   my ($scale_ref, $music_ref) = @_;
   my @scale_notes = @{$scale_ref};
   my %music = %{$music_ref};
-
   my $scale_str = join" ", @scale_notes;
-
   my $prog_str;
+
   foreach my $chord (0..6) {
     $prog_str.= $music{$chord}{num} . " ";
   }
 
   my $chord_block = &chord_output(%music);
+
+  # for progression notation
   my @notes = 1..10;
   my @relation_arr = &relation_block(\%music, \@notes);
   unshift(@relation_arr, "Tonal Relationships");
+
   my @relation_name_arr = &relation_name_block(\%music, $scale_ref);
   unshift(@relation_name_arr, "Chord Progression");
-  my @progArr = (\@relation_arr, \@relation_name_arr);
 
   if (! defined $in_mode) {
     $in_mode = ($user_scale_name) ? $user_scale_name : "User provided scale" ;
   }
 
-  # TODO
-  # 8 tone scales should be pinned against their closest 7 tone scale
+  # TODO 8 tone scales should be pinned against their closest 7 tone scale
   # IE D bebop minor, D dorian.
-
   my $output = << "  ENDOUT";
 
   $in_key  -  $in_mode
@@ -908,13 +960,15 @@ sub output_data {
 
 $chord_block
 
+Chords in X/Y notation are chord X with root/base note Y
   ENDOUT
 
   chomp $output;
   say $output;
 
   if ($condense_boards) {
-    &column_color_txt_arr(\@progArr, " ");
+    my @progArr = (\@relation_arr, \@relation_name_arr);
+    &column_color_txt_arr(\@progArr, "      ");
   } else {
     map {say} @relation_arr;
     say "";
@@ -923,7 +977,14 @@ $chord_block
 
 }
 
-
+# 
+# 
+# 
+# Guitar stuff 
+# 
+# 
+#
+  
 #
 # TODO this function is a bit long and could use some finesse
 #
@@ -1016,6 +1077,11 @@ sub print_boards {
   }
 }
 
+#
+#
+# Keyboard stuff
+#
+#
 
 sub top_line_pattern {
   my $return;
@@ -1027,14 +1093,6 @@ sub top_line_pattern {
     $return .= $two_white_keys;
   }
   $return .= " $reset";
-}
-
-sub array_search {
-  my ($elem, @arr) = @_;
-  for (0..$#arr) {
-    return $_ if $arr[$_] eq $elem;
-  }
-  return -1;
 }
 
 
@@ -1126,38 +1184,6 @@ sub bottom_line_pattern {
   return $ret;
 }
 
-sub length_without_color {
-  my ($txt) = @_;
-  $txt =~ s/$ansiColorRegex//g;
-  return length $txt;
-}
-
-sub column_color_txt_arr {
-  my ($textAref, $sep) = @_;
-  my @txtsArr = @{$textAref};
-  my $longestLine = 0;
-  for my $lines (@txtsArr) {
-    map {$longestLine = &length_without_color($_) if &length_without_color($_) > $longestLine} @$lines;
-  }
-  my $half = int((scalar @txtsArr + 1) / 2);
-  for my $index (0..$half) {
-    my $idxA = $index * 2;
-    my $idxB = $idxA + 1;
-    if (defined $txtsArr[$idxB]) {
-      my @ar1 = @{$txtsArr[$idxA]};
-      my @ar2 = @{$txtsArr[$idxB]};
-      for my $arIDx (0..$#ar1) {
-        my $txt1 = $ar1[$arIDx];
-        my $txt2 = $ar2[$arIDx];
-        my $spaces = " " x ($longestLine - &length_without_color($txt1));
-        say $txt1 . $spaces . $sep . $txt2 ;
-      }
-    } else {
-      map {say} @{$txtsArr[$idxA]};
-    }
-  }
-}
-
 sub show_keyboards {
   my ($noteRef, $musicRef) = @_;
   my @text = &gen_keyboards($noteRef, $musicRef);
@@ -1214,6 +1240,14 @@ sub gen_keyboards {
   }
   return (@txt_arr);
 }
+
+# 
+# 
+# 
+# Main
+# 
+# 
+# 
 
 sub main {
   &handle_args;
