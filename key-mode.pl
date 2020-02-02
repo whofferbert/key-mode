@@ -582,7 +582,7 @@ sub chord_output {
   foreach my $chord (sort (keys %music)) {
     $outstr .= "$music{$chord}{notes}";
     my $padding = length("$music{$chord}{base} $music{$chord}{sig} ") - length($music{$chord}{notes});
-    $padding-- if ($music{$chord}{sig} eq "Dim °");
+    #$padding-- if ($music{$chord}{sig} eq "Dim °");
     for (my $i=1 ; $i <= $padding ; $i++) {
       $outstr .= " ";
     }
@@ -602,68 +602,252 @@ sub chord_output {
   return $outstr;
 }
 
-sub box_ref {
-  my $txt = <<"  EOF";
-   ┏━┓
-   ┃ ┃
-   ┗━┛
-    │
-   ┏┷┓
-   ┨ ┠──
-   ┗┯┛
- ╳ ╱╲
-     ├
 
-  EOF
+sub centerStr {
+  my ($str, $len, $pad) = @_;
+  $pad //= " ";
+  my $pre = $pad x int(($len - length($str) + 1) / 2);
+  my $post = $pad x int(($len - length($str)) / 2);
+  return $pre . $str . $post;
 }
 
-sub SteveMugglinProgressionBlockSimple {
-  my $txt = <<"  EOF";
-   ┏━━━┓
-   ┃ 2 ┠──┐
-   ┗━━━┛  
-  EOF
+sub longestString {
+  my $len = 0;
+  map {my $c = length($_);$len = $c if $c > $len} @_;
+  return $len;
 }
 
-sub progression_block_builder {
-  # TODO this should take an input of 7 (or more?) things,
-  # which will then be translated into a text style flow chart
-  # TODO maybe use more box drawing characters.
-  # TODO make a better progression chart
-  # based on http://www.angelfire.com/music/HarpOn/image/chordprogressionmap.gif
-  # by Steve Mugglin
-  #if ($extendedProgression) {
-  #  &SteveMugglinProgressionBlockSimple;
-  #} else {
-  #  
-  #}
+sub smBlock1Horiz {
+  my ($txt, $fifth, $second, $seventh) = @_;
+  my @cmp = @_;
+  shift @cmp;
+  my $len = &longestString(@cmp);
+  my $fivepad = &centerStr($fifth, $len);
+  my $secondpad = &centerStr($second, $len);
+  my $seventhpad = &centerStr($seventh, $len);
+  my $emptypad = " " x $len;
+  my $bars = "━" x ($len - 3);
+  my $spaces = " " x ($len - 3);
+  # sed replace the text and return
+  $txt =~ s/^(\s+┏)/$1$bars/mg;
+  $txt =~ s/^(\s+┃) 5 ┃/$1$fivepad┃/m;
+  $txt =~ s/^(\s+┃) - ┠/$1$emptypad┃/mg;
+  $txt =~ s/^(\s+┗)(━┯┯┛)/$1$bars$2/m;
+  $txt =~ s/^(\s{4})(?=\S)/$1$spaces/mg;
+  $txt =~ s/^(\s+┃) 2 ┃/$1$secondpad┃/m;
+  $txt =~ s/^(\s+┃)7\/2┠/$1$seventhpad┃/m;
+  $txt =~ s/^(\s+┗)(━┯━┛)/$1$bars$2/m;
+  return $txt;
+}
+
+sub smBlock2Horiz {
+  my ($txt, $six, $four, $three, $root) = @_;
+  my @cmp = @_;
+  shift @cmp;
+  my $len = &longestString(@cmp);
+  my $sixpad = &centerStr($six, $len);
+  my $fourpad = &centerStr($four, $len);
+  my $threepad = &centerStr($three, $len);
+  my $rootpad = &centerStr($root, $len);
+  my $emptypad = " " x $len;
+  my $bars = "━" x ($len - 3);
+  my $pipes = "─" x ($len - 3);
+  my $spaces = " " x ($len - 3);
+  # sed replace the text and return
+  $txt =~ s/^(.*?┏)(━━━┓)/$1$bars$2/mg;
+  $txt =~ s/^(.*?┃) 6 ┃/$1$sixpad┃/m;
+  $txt =~ s/^(.*?┨)4\/6┠/$1$fourpad┃/mg;
+  $txt =~ s/^(.*?┗)(━┯━┛)/$1$bars$2/m;
+
+  $txt =~ s/^(.*?┏)(┷┷━┓)/$1$bars$2/mg;
+  $txt =~ s/^(.*?┃) 3 ┃/$1$threepad┃/m;
+  $txt =~ s/^(.*?┨)1\/3┠/$1$rootpad┃/m;
+  $txt =~ s/^(.*?┗)(━┯━┛)/$1$bars$2/m;
+
+  $txt =~ s/^(.*?╰─)/$1$pipes/m;
+  $txt =~ s/^(.*?△\s+)(▽△)/$1$spaces$2/m;
+  $txt =~ s/^(\s+▽)/$1$spaces/m;
+  $txt =~ s/^(\s+╰)/$1$pipes/m;
+  return $txt;
+}
+
+sub smBlock3Horiz {
+  my ($txt, $two, $seven, $four, $second) = @_;
+  my @cmp = @_;
+  shift @cmp;
+  my $len = &longestString(@cmp);
+  my $twopad = &centerStr($two, $len);
+  my $sevenpad = &centerStr($seven, $len);
+  my $fourpad = &centerStr($four, $len);
+  my $secondpad = &centerStr($second, $len);
+  my $emptypad = " " x $len;
+  my $bars = "━" x ($len - 3);
+  my $pipes = "─" x ($len - 3);
+  my $spaces = " " x ($len - 3);
+  # sed replace the text and return
+  $txt =~ s/^(.*?┏)(━━━┓)/$1$bars$2/mg;
+  $txt =~ s/^(.*?┃) 2 ┃/$1$twopad┃/m;
+  $txt =~ s/^(.*?┨)7\/2┠/$1$sevenpad┃/mg;
+  $txt =~ s/^(.*?┗)(━┯┯┛)/$1$bars$2/m;
+
+  $txt =~ s/^(.*?┏)(━┷━┓)/$1$bars$2/mg;
+  $txt =~ s/^(.*?┃) 4 ┠/$1$fourpad┃/m;
+  $txt =~ s/^(.*?┨)2\/4┠/$1$secondpad┃/m;
+  $txt =~ s/^(.*?┗)(━┯━┛)/$1$bars$2/m;
+  
+  $txt =~ s/^(.*?)(│╰▷)/$1$spaces$2/m;
+  $txt =~ s/^(.*?)(△   │)/$1$spaces$2/m;
+  $txt =~ s/^((?:\s+▽){2})/$1$spaces/m;
+  $txt =~ s/^(\s+╰─+┴)/$1$pipes/m;
+  return $txt;
+}
+
+sub smBlock4Horiz {
+  my ($txt, $root, $five) = @_;
+  my @cmp = @_;
+  shift @cmp;
+  my $len = &longestString(@cmp);
+  my $rootpad = &centerStr($root, $len);
+  my $fivepad = &centerStr($five, $len);
+  my $emptypad = " " x $len;
+  my $bars = "━" x ($len - 3);
+  my $pipes = "─" x ($len - 3);
+  my $spaces = " " x ($len - 3);
+  # sed replace the text and return
+  $txt =~ s/^(.*?┏)(━━━┓)/$1$bars$2/mg;
+  $txt =~ s/^(.*?┃) - ┃/$1$emptypad┃/mg;
+  $txt =~ s/^(.*?┨)1\/5┃/$1$rootpad┃/mg;
+  $txt =~ s/^(.*?┺)(━┯━┛)/$1$bars$2/m;
+
+  $txt =~ s/^(.*?┏)(┷┷━┓)/$1$bars$2/mg;
+  #$txt =~ s/^(.*?┃)   ┃/$1$emptypad┃/m;
+  $txt =~ s/^(.*?┨) 5 ┠/$1$fivepad┃/m;
+  $txt =~ s/^(.*?┗)(━━━┛)/$1$bars$2/m;
+
+  $txt =~ s/^(.*?┼)/$1$pipes/m;
+  $txt =~ s/^(.*?)(▽▽)/$1$spaces$2/m;
+  $txt =~ s/^(.*?─{5})(╯)/$1$pipes$2/m;
+  $txt =~ s/^(.*?)(△\s+$)/$1$spaces$2/m;
+  return $txt;
+}
+
+sub smBlock5Horiz {
+  my ($txt, $four, $five, $root) = @_;
+  my @cmp = @_;
+  shift @cmp;
+  my $len = &longestString(@cmp); 
+  my $fourpad = &centerStr($four, $len);
+  my $fivepad = &centerStr($five, $len);
+  my $rootpad = &centerStr($root, $len);
+  my $emptypad = " " x $len;
+  my $bars = "━" x ($len - 3);
+  my $pipes = "─" x ($len - 3);
+  my $spaces = " " x ($len - 3);
+  # sed replace the text and return
+  $txt =~ s/^(.*?┏)(━━━┓)/$1$bars$2/mg;
+  $txt =~ s/^(.*?┃)4\/1┃/$1$fourpad┃/mg;
+  $txt =~ s/^(.*?┃)5\/1┃/$1$fivepad┃/mg;
+  $txt =~ s/^(.*?┗┯┯)(━┛)/$1$bars$2/m;
+
+  $txt =~ s/^(.*?┏┷┷)(━┓)/$1$bars$2/mg;
+  $txt =~ s/^(.*?┃) - ┃/$1$emptypad┃/m;
+  $txt =~ s/^(.*?┨) 1 ┃/$1$rootpad┃/m;
+  $txt =~ s/^(.*?┗━┯)(━┛)/$1$bars$2/m;
+  return $txt;
+}
+
+sub SteveMugglinProgressionBlockFlat {
+  my ($chordRef, $noteRef) = @_;
+  # should be references to arrays of text in the right order
+  my @chords = @{$chordRef};
+  my @notes = @{$noteRef};
+  my $minWidth = 3;
+  my @txt;
+  # NOTE Do not adjust this without adjusting the regexen in the supporting subs
+  my $txtRef = <<"  EOF";
+  ┏━━━┓   ┏━━━┓    ┏━━━┓   ┏━━━┓   ┏━━━┓
+  ┃ 5 ┃   ┃ 6 ┃    ┃ 2 ┃   ┃ - ┃   ┃4/1┃
+  ┃ - ┠─▷─┨4/6┠──▷─┨7/2┠─▷─┨1/5┃   ┃5/1┃
+  ┗━┯┯┛   ┗━┯━┛    ┗━┯┯┛ ╭─┺━┯━┛   ┗┯┯━┛
+    │╰─────╮│        │╰▷─┼──╮│      ││  
+    △      ▽△        △   │  ▽▽      △▽  
+  ┏━┷━┓   ┏┷┷━┓    ┏━┷━┓ △ ┏┷┷━┓   ┏┷┷━┓
+  ┃ 2 ┃   ┃ 3 ┃    ┃ 4 ┠─╯ ┃ - ┃   ┃ - ┃
+  ┃7/2┠─▷─┨1/3┠──▷─┨2/4┠─▷─┨ 5 ┠─▷─┨ 1 ┃
+  ┗━┯━┛   ┗━┯━┛    ┗━┯━┛   ┗━━━┛   ┗━┯━┛
+    ▽       ▽        ▽               △  
+    ╰───────┴────────┴───────────────╯  
+  EOF
+
+  my $newtxt = &smBlock1Horiz($txtRef, $chords[4], $chords[1], $chords[6] . "/" . $notes[1]);
+  $newtxt = &smBlock2Horiz($newtxt, $chords[5], $chords[4] . "/" . $notes[5] , $chords[2], $chords[0] . "/" . $notes[2]);
+  $newtxt = &smBlock3Horiz($newtxt, $chords[1], $chords[6] . "/" . $notes[1] , $chords[4], $chords[1] . "/" . $notes[3]);
+  $newtxt = &smBlock4Horiz($newtxt, $chords[0] . "/" . $notes[4], $chords[4]);
+  $newtxt = &smBlock5Horiz($newtxt, $chords[3] . "/" . $notes[0], $chords[4] . "/" . $notes[0], $chords[0]);
+
+  return $newtxt;
+}
+
+sub SteveMugglinProgressionBlock {
+  my ($chordRef, $noteRef) = @_;
+  # chordRef = array of strings "E Minor" or "iim"
+  # noteRef = array of strings of notes of that scale, E, F#, etc
+  # this will have to find the longest possible string, and use that
+  # length logic for padding the boxes
+  my $txt = <<"  EOF";
+   ┏━━━┓   ┏━━━┓
+   ┃ 2 ┃   ┃ 5 ┃
+  ╭┨7/2┠─▷─┨   ┃
+  │┗━┯━┛   ┗┯┯━┛
+  ▽  │╭─────╯│
+  │  ▽▽      ▽
+ ╭╯┏━┷┷┓   ┏━┷━┓
+ │ ┃ 3 ┃   ┃ 6 ┃
+ │╭┨1/3┠─▷─┨4/6┃
+ ││┗━┯━┛   ┗┯┯━┛
+ │▽  │╭─────╯│
+ ││  ▽▽      ▽
+ ├╯┏━┷┷┓   ┏━┷━┓
+ │ ┃ 4 ┃   ┃ 2 ┃
+ │╭┨2/4┠─▷─┨7/2┃
+ ││┗━┯┯┛ ╭─┺━┯━┛
+ │▽  │╰──┼──╮│
+ ││  ▽╭◁─╯  ▽▽
+ ├╯┏━┷┷┓   ┏┷┷━┓
+ │╭┨ 5 ┠─◁─┨1/5┃
+ ││┗━┯━┛   ┗━━━┛
+ │▽  ▽ 
+ ├╯┏━┷━┓   ┏━━━┓
+ ╰─┨ 1 ┠─▷─┨4/1┃
+   ┃   ┠─◁─┨5/1┃
+   ┗━━━┛   ┗━━━┛
+  EOF
+  #say $txt;
 }
 
 sub relation_block {
-  my (%music) = @_;
+  my ($musicRef, $scaleRef) = @_;
+  my %music = %{$musicRef};
 
-  my $pad = "    ";
   my %h;
   for my $num (sort keys %music) {
-    $h{$num} = $pad;
+    $h{$num} = "    ";
     my $len = length($music{$num}{num});
     $h{$num} =~ s/.{$len}$/$music{$num}{num}/;
   }
 
-  my $prog = <<"  END_PROG";
-                           $h{3}  -- $h{6}
-    $h{6} -> $h{2} -> $h{5} <       ><       > $h{0}
-                            $h{1}  -- $h{4}
-  END_PROG
+  my @chords = ($h{0}, $h{1}, $h{2}, $h{3}, $h{4}, $h{5}, $h{6});  
+
+  my $prog = &SteveMugglinProgressionBlockFlat(\@chords, $scaleRef);
   chomp $prog;
-  return $prog;
+  return split(/\n/, $prog);
 }
 
 sub relation_name_block {
-  my (%music) = @_;
-  #say Dumper(\%music);
+  my ($musicRef, $scaleRef) = @_;
+  my %music = %{$musicRef};
 
-  my $sp = " " x 7;
+  # TODO this needs better handling in 8 note scales
 
   my $one = $music{0}{base} . " " . $music{0}{sig};
   my $two = $music{1}{base} . " " . $music{1}{sig};
@@ -673,14 +857,11 @@ sub relation_name_block {
   my $six = $music{5}{base} . " " . $music{5}{sig};
   my $seven = $music{6}{base} . " " . $music{6}{sig};
 
+  my @chords = ($one, $two, $three, $four, $five, $six, $seven);
 
-  my $prog = <<"  END_PROG";
-    $sp       $sp            $four  --  $seven 
-    $seven -> $three -> $six <  $sp  ><  $sp  > $one
-    $sp       $sp            $two  --  $five 
-  END_PROG
+  my $prog = &SteveMugglinProgressionBlockFlat(\@chords, $scaleRef);
   chomp $prog;
-  return $prog;
+  return split(/\n/, $prog);
 }
 
 
@@ -700,13 +881,20 @@ sub output_data {
   }
 
   my $chord_block = &chord_output(%music);
-  my $relation_block = &relation_block(%music);
-  my $relation_name_block = &relation_name_block(%music);
+  my @notes = 1..10;
+  my @relation_arr = &relation_block(\%music, \@notes);
+  unshift(@relation_arr, "Tonal Relationships");
+  my @relation_name_arr = &relation_name_block(\%music, $scale_ref);
+  unshift(@relation_name_arr, "Chord Progression");
+  my @progArr = (\@relation_arr, \@relation_name_arr);
 
-  #$in_mode ||= "User provided scale";
   if (! defined $in_mode) {
     $in_mode = ($user_scale_name) ? $user_scale_name : "User provided scale" ;
   }
+
+  # TODO
+  # 8 tone scales should be pinned against their closest 7 tone scale
+  # IE D bebop minor, D dorian.
 
   my $output = << "  ENDOUT";
 
@@ -719,17 +907,20 @@ sub output_data {
   Chords:
 
 $chord_block
-  
-  Progression Chart:
-
-$relation_block
-
-$relation_name_block
 
   ENDOUT
+
   chomp $output;
-  chomp $output if ($show_fingerboard || $show_keyboard);
   say $output;
+
+  if ($condense_boards) {
+    &column_color_txt_arr(\@progArr, " ");
+  } else {
+    map {say} @relation_arr;
+    say "";
+    map {say} @relation_name_arr;
+  }
+
 }
 
 
