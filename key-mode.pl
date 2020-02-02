@@ -118,25 +118,31 @@ my %colors = (
 
 my %color_backgrounds = (
   #'30m' => $colors{BGBLACK},
-  '30m' => "\e[38;5;235m",
-  '31m' => $colors{BGRED},
-  '32m' => $colors{BGGREEN},
-  '33m' => $colors{BGYELLOW},
-  '34m' => $colors{BGBLUE},
-  '35m' => $colors{BGMAJENTA},
-  '36m' => $colors{BGCYAN},
-  '37m' => $colors{BGWHITE},
+  #'30m' => "\e[38;5;235m",
+  '0' => $colors{BGRED},
+  '1' => $colors{BGGREEN},
+  '2' => $colors{BGYELLOW},
+  '3' => $colors{BGBLUE},
+  '4' => $colors{BGMAJENTA},
+  '5' => $colors{BGCYAN},
+  '6' => $colors{BGWHITE},
+  '7' => "\x1b[48;5;21m",
+  '8' => "\x1b[48;5;57m",
+  '9' => "\x1b[48;5;93m",
 );
 
 my %color_font_bg_correlator = (
-  '30m' => $colors{BWHITE},
-  '31m' => $colors{BWHITE},
-  '32m' => $colors{BWHITE},
-  '33m' => $colors{BBLACK},
-  '34m' => $colors{BWHITE},
-  '35m' => $colors{BWHITE},
-  '36m' => $colors{BWHITE},
-  '37m' => $colors{BBLACK},
+  #'' => $colors{BWHITE},
+  '0' => $colors{BWHITE},
+  '1' => $colors{BWHITE},
+  '2' => $colors{BBLACK},
+  '3' => $colors{BWHITE},
+  '4' => $colors{BWHITE},
+  '5' => $colors{BWHITE},
+  '6' => $colors{BBLACK},
+  '7' => $colors{BWHITE},
+  '8' => $colors{BWHITE},
+  '9' => $colors{BWHITE},
 );
 
 my %scale_colors = (
@@ -147,12 +153,12 @@ my %scale_colors = (
   '4' => $colors{BGREEN},
   '5' => $colors{BMAJENTA},
   '6' => $colors{BCYAN},
-  '7' => "\e[38;5;109m",
-  '8' => "\e[38;5;109m",
-  '9' => "\e[38;5;36m",
+  '7' => "\e[38;5;21m",
+  '8' => "\e[38;5;57m",
+  '9' => "\e[38;5;93m",
 );
 
-my $ansiColorRegex = '\e\[(?:1;)?(\d+m)|\x1b\[\d+;\d+;(\d+m)';
+my $ansiColorRegex = '\e\[(?:1;)?(\d+m)|\x1b\[(\d+;\d+;\d+m)|\e\[(\d+;\d+;\d+m)';
 
 my $fret_color = $colors{BWHITE};
 
@@ -1100,11 +1106,18 @@ sub top_line_pattern {
 
 
 sub getFgBgColor {
+  my ($idx) = @_;
+  return ($color_backgrounds{$idx}, $color_font_bg_correlator{$idx});
+}
+
+sub getFgBgColor_old {
   my ($color) = @_;
-  if ($color =~ /$ansiColorRegex/) {
+  if ($color =~ /$ansiColorRegex/g) {
     my $colorBase = $1;
+
     if (! defined $colorBase) {
       # yellow?
+      say "failed to do the thing on $color";
       return($color_backgrounds{"33m"}, $color_font_bg_correlator{"33m"});
     }
     if (exists $color_backgrounds{$colorBase} && exists $color_font_bg_correlator{$colorBase}) {
@@ -1114,7 +1127,8 @@ sub getFgBgColor {
 }
 
 sub mid_line_pattern {
-  my ($noteArrRef, $colorArrRef) = @_;
+  my ($noteArrRef, $colorArrRef, $scaleNotesRef) = @_;
+  my @scale = @{$scaleNotesRef};
   my @noteArr = @{$noteArrRef};
   my @noteColors = @{$colorArrRef};
   my $line = &top_line_pattern;
@@ -1125,8 +1139,8 @@ sub mid_line_pattern {
     my $matchSpaces = $2;
     my $note = shift @notes;
     if (grep {$note eq $_} @noteArr) {
-      my $colorIndex = &array_search($note, @noteArr);
-      my ($bgColor, $fgColor) = &getFgBgColor($noteColors[$colorIndex]);
+      my $colorIndex = &array_search($note, @scale);
+      my ($bgColor, $fgColor) = &getFgBgColor($colorIndex);
       my $colorSet = $fgColor . $bgColor;
       my $localKeyWidth = $keyWidth;
       $localKeyWidth = length $matchSpaces;# if length $matchSpaces == 1;
@@ -1149,7 +1163,8 @@ sub mid_line_pattern {
 }
 
 sub bottom_line_pattern {
-  my ($noteAref, $colorAref) = @_;
+  my ($noteAref, $colorAref, $scaleNotesRef) = @_;
+  my @scale = @{$scaleNotesRef};
   my @noteHighlight = @{$noteAref};
   my @noteColors = @{$colorAref};
   my @notes = grep {$_ !~ /[#b]$/} @kbdFullNotes;
@@ -1157,10 +1172,9 @@ sub bottom_line_pattern {
   my $i = 0;
   for (1..$octaves * 7 + 2) {
     my $note = shift @notes;
-    #my $colorSet = $piano_keys{$note}{COLOR} . $piano_keys{$note}{BGCOLOR};
     if (grep {$note eq $_} @noteHighlight) {
-      my $colorIndex = &array_search($note, @noteHighlight);
-      my ($bgColor, $fgColor) = &getFgBgColor($noteColors[$colorIndex]);
+      my $colorIndex = &array_search($note, @scale);
+      my ($bgColor, $fgColor) = &getFgBgColor($colorIndex);
       my $colorSet = $fgColor . $bgColor;
       my $text = " " x $keyWidth;
       my $startSpaces = int($keyWidth / 2);
@@ -1221,8 +1235,8 @@ sub gen_keyboards {
       @colors = ($scale_colors{$idxA}, $scale_colors{$idxB}, $scale_colors{$idxC});
     }
     my $top_line = &top_line_pattern;
-    my $mid_line = &mid_line_pattern(\@chordNotes, \@colors);
-    my $bottom_line = &bottom_line_pattern(\@chordNotes, \@colors);
+    my $mid_line = &mid_line_pattern(\@chordNotes, \@colors, \@scaleNotes);
+    my $bottom_line = &bottom_line_pattern(\@chordNotes, \@colors, \@scaleNotes);
 
     push(@txt, "");
     push(@txt, $scale_colors{$key} . $music{$key}{base} . " " . $music{$key}{sig} . $reset);
@@ -1237,8 +1251,8 @@ sub gen_keyboards {
     push(@txt, "");
     push(@txt, "Key: " . $music{0}{base} . " - Scale: " . $in_mode);
     push(@txt, &top_line_pattern) for 1..1;
-    push(@txt, &mid_line_pattern(\@scaleNotes, \@colors)) for 1..3;
-    push(@txt, &bottom_line_pattern(\@scaleNotes, \@colors)) for 1..3;
+    push(@txt, &mid_line_pattern(\@scaleNotes, \@colors, \@scaleNotes)) for 1..3;
+    push(@txt, &bottom_line_pattern(\@scaleNotes, \@colors, \@scaleNotes)) for 1..3;
     push(@txt_arr, \@txt);
   }
   return (@txt_arr);
