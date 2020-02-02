@@ -2,7 +2,7 @@
 # by William Hofferbert
 # a script to get information about musical scales
 
-use 5.010;				# say
+use 5.022;				# perf
 use utf8;				# box drawing
 use open ':std', ':encoding(UTF-8)';	# like perl -CS; utf8ify std streams
 use strict;				# good form
@@ -192,28 +192,35 @@ sub usage {
   Additionally, you can provide your own step pattern and key
   if desired.
 
+  Most options can be mixed and matched as you might expect.
+
 Usage:
   $prog -key [note] -mode [mode]
   $prog -key [note] -steps ["quoted pattern"]
 
-  Key:
+  -R
+  -key [note]
     [note] can be any of:
     @notes
 
-  Mode:
+  -m
+  -mode [mode]
     [mode] can be any of: Major, Minor,
     $mode_str
 
-  Steps:
+  -P
+  -steps ["quoted pattern"]
     ["quoted pattern"] can consist of any quoted and space
     delimited set of 7 numbers which add up to 12, to allow
     for extrapolation of non-built in modes.
 
 Options:
 
+  -b
   -flat
     Use flat notes inseted of sharp.
 
+  -n
   -name ["Scale Name"]
     Scale Name can be any quoted string.
     Provides the name to display when using a custom Step signature
@@ -225,6 +232,7 @@ Options:
     Colors may be any of:
       $color_str
 
+  -c
   -condense
     Print the guitar fingerboards or the piano keyboards in multiple columns.
     Good for running with a wide terminal
@@ -235,10 +243,12 @@ Options:
 
 Guitar Options
 
+  -F
   -fingerboards
     For each chord in the scale, print a representation of a guitar
     figerboard, with the notes displayed
 
+  -g
   -guitar-tuning ["Open Notes"]
     Open notes can be any quoted list of notes, low to high.
     Not limited to 6 strings.
@@ -246,6 +256,7 @@ Guitar Options
 
 Keyboard Options
 
+  -K
   -keyboards
     For each chord in the scale, print a representation of a piano
     keyboard, with the notes highlighed on the keyboard
@@ -261,15 +272,16 @@ Examples:
 
   Get info about a user-provided scale
     $prog -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian"
- 
+
   Get info and fingerboard patterns for an 8 string guitar with weird tuning:
     $prog -key B -mode Mixolydian -fingerboards -guitar-tuning "E A D A D G B E"
  
-  Get condensed fretboard info about a scale
-    $prog -key D -mode Dorian -fingerboards -condense
- 
   Get info about a keyboard, condensed
     $prog -key G -mode Phrygian -keyboards -condense
+ 
+  The argument handling also supports shorthand addressing on most options.
+  To see condensed keyboard and fingerboard renditions of a Db Major scale: 
+    $prog -b -R Db -m Major -F -K -c
  
   END_USAGE
 
@@ -284,16 +296,17 @@ sub check_required_args {		# handle leftover @ARGV stuff here if need be
     @notes = @notesFlat;
   }
 
-  &err("Invalid Key! Must be one of: " . join", ", @notes) unless defined $in_key;
+  &err("Requires an input key! Must be one of: " . join", ", @notes) unless defined $in_key;
   &err("Invalid Key! Must be one of: " . join", ", @notes) unless grep {$in_key eq $_} @notes;
   if (! $in_mode && ! @in_steps) {
     &helps;
   }
   if (defined $in_mode) {
     unless (grep {$in_mode =~ /^$_$/i} keys %mode_hash) {
-      &err("$prog requires a valid -key");
+      &err("$prog requires a valid -mode");
     }
-  } else {
+  } 
+  if (! defined $in_key) {
     &err("$prog requires a valid -key");
   }
   if (@in_steps) {
@@ -317,7 +330,7 @@ sub check_required_args {		# handle leftover @ARGV stuff here if need be
 sub parse_insteps {
   my $steps = $_[1];
   push (@in_steps, split(/\s+/, $steps));
-  return(@in_steps);
+  #return(@in_steps);
 }
 
 sub parse_tuning {
@@ -345,15 +358,15 @@ sub parse_colors {
 
 sub handle_args {
   Getopt::Long::GetOptions(
-    'key=s' => \$in_key,
-    'mode=s' => \$in_mode,
-    'steps=s' => \&parse_insteps,
-    'name=s' => \$user_scale_name,
-    'flats' => \$use_flats,
+    'R|key=s' => \$in_key,
+    'm|mode=s' => \$in_mode,
+    'P|steps=s' => \&parse_insteps,
+    'n|name=s' => \$user_scale_name,
+    'b|flats' => \$use_flats,
     'static-triad-colors' => \$static_triad_colors,
-    'fingerboards' => \$show_fingerboard,
-    'keyboards' => \$show_keyboard,
-    'guitar-tuning=s' => \&parse_tuning,
+    'F|fingerboards' => \$show_fingerboard,
+    'K|keyboards' => \$show_keyboard,
+    'g|guitar-tuning=s' => \&parse_tuning,
     'color-1=s' => sub {&parse_colors(0, $_[1])},
     'color-2=s' => sub {&parse_colors(1, $_[1])},
     'color-3=s' => sub {&parse_colors(2, $_[1])},
@@ -361,7 +374,7 @@ sub handle_args {
     'color-5=s' => sub {&parse_colors(4, $_[1])},
     'color-6=s' => sub {&parse_colors(5, $_[1])},
     'color-7=s' => sub {&parse_colors(6, $_[1])},
-    'condense' => \$condense_boards,
+    'c|condense' => \$condense_boards,
     'h|help' => \&usage,
   );
   &check_required_args;
