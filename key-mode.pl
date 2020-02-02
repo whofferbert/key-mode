@@ -168,7 +168,7 @@ my $two_white_keys = $colors{BGWHITE} . " " x ($keyWidth - 1) . $vert_bar . " " 
 
 
 # expected input vars
-my ($in_key, $in_mode, @in_steps, $user_scale_name, $use_flats);
+my ($in_key, $in_mode, @in_steps, $user_scale_name, $use_flats, $static_triad_colors);
 
 
 
@@ -209,10 +209,10 @@ Usage:
     delimited set of 7 numbers which add up to 12, to allow
     for extrapolation of non-built in modes.
 
-Additional Options
+Options:
 
   -flat
-    Use flat notes inseted of sharp;
+    Use flat notes inseted of sharp.
 
   -name ["Scale Name"]
     Scale Name can be any quoted string.
@@ -228,6 +228,10 @@ Additional Options
   -condense
     Print the guitar fingerboards or the piano keyboards in multiple columns.
     Good for running with a wide terminal
+
+  -static-triad-colors
+    Only print triads with the same set of colors, representing
+    root, third, fifth.
 
 Guitar Options
 
@@ -346,6 +350,7 @@ sub handle_args {
     'steps=s' => \&parse_insteps,
     'name=s' => \$user_scale_name,
     'flats' => \$use_flats,
+    'static-triad-colors' => \$static_triad_colors,
     'fingerboards' => \$show_fingerboard,
     'keyboards' => \$show_keyboard,
     'guitar-tuning=s' => \&parse_tuning,
@@ -906,7 +911,15 @@ sub gen_keyboards {
   for my $key (sort keys %music) {
     my @txt;
     my @chordNotes = split(/\s+/, $music{$key}{notes});
-    my @colors = ($scale_colors{0},$scale_colors{2},$scale_colors{4});
+    my @colors;
+    if ($static_triad_colors) {
+      @colors = ($scale_colors{0},$scale_colors{2},$scale_colors{4});
+    } else {
+      my $idxA = &array_search($chordNotes[0], @scaleNotes);
+      my $idxB = &array_search($chordNotes[1], @scaleNotes);
+      my $idxC = &array_search($chordNotes[2], @scaleNotes);
+      @colors = ($scale_colors{$idxA}, $scale_colors{$idxB}, $scale_colors{$idxC});
+    }
     my $top_line = &top_line_pattern;
     my $mid_line = &mid_line_pattern(\@chordNotes, \@colors);
     my $bottom_line = &bottom_line_pattern(\@chordNotes, \@colors);
