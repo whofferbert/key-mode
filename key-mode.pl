@@ -640,12 +640,12 @@ sub chord_output {
   my $outstr = "$input_spaces| ";
 
   foreach my $chord (sort (keys %music)) {
-    $outstr .= "$music{$chord}{base} $music{$chord}{sig} | ";
+    $outstr .= "$scale_colors{$chord}$music{$chord}{base} $music{$chord}{sig}$reset | ";
   }
   
   $outstr .= "\n$input_spaces| ";
   foreach my $chord (sort (keys %music)) {
-    $outstr .= "$music{$chord}{notes}";
+    $outstr .= "$scale_colors{$chord}$music{$chord}{notes}$reset";
     my $padding = length("$music{$chord}{base} $music{$chord}{sig} ") - length($music{$chord}{notes});
     for (my $i=1 ; $i <= $padding ; $i++) {
       $outstr .= " ";
@@ -656,7 +656,7 @@ sub chord_output {
   $outstr .= "\n$input_spaces| ";
   foreach my $chord (sort (keys %music)) {
     my $padding = length("$music{$chord}{base} $music{$chord}{sig} ") - length($music{$chord}{num}) - 1;
-    $outstr .= "$music{$chord}{num} ";
+    $outstr .= "$scale_colors{$chord}$music{$chord}{num}$reset ";
     for (my $i=1 ; $i <= $padding ; $i++) {
       $outstr .= " ";
     }
@@ -689,12 +689,12 @@ sub smBlock1Horiz {
   my $spaces = " " x ($len - 3);
   # sed replace the text and return
   $txt =~ s/^(\s+┏)/$1$bars/mg;
-  $txt =~ s/^(\s+┃) 5 ┃/$1$fivepad┃/m;
+  $txt =~ s/^(\s+┃) 5 ┃/$1$scale_colors{4}$fivepad$reset┃/m;
   $txt =~ s/^(\s+┃) - ┠/$1$emptypad┃/mg;
   $txt =~ s/^(\s+┗)(━┯┯┛)/$1$bars$2/m;
   $txt =~ s/^(\s{4})(?=\S)/$1$spaces/mg;
-  $txt =~ s/^(\s+┃) 2 ┃/$1$secondpad┃/m;
-  $txt =~ s/^(\s+┃)7\/2┠/$1$seventhpad┃/m;
+  $txt =~ s/^(\s+┃) 2 ┃/$1$scale_colors{1}$secondpad$reset┃/m;
+  $txt =~ s/^(\s+┃)7\/2┠/$1$scale_colors{6}$seventhpad$reset┃/m;
   $txt =~ s/^(\s+┗)(━┯━┛)/$1$bars$2/m;
   return $txt;
 }
@@ -714,13 +714,13 @@ sub smBlock2Horiz {
   my $spaces = " " x ($len - 3);
   # sed replace the text and return
   $txt =~ s/^(.*?┏)(━━━┓)/$1$bars$2/mg;
-  $txt =~ s/^(.*?┃) 6 ┃/$1$sixpad┃/m;
-  $txt =~ s/^(.*?┨)4\/6┠/$1$fourpad┃/mg;
+  $txt =~ s/^(.*?┃) 6 ┃/$1$scale_colors{5}$sixpad$reset┃/m;
+  $txt =~ s/^(.*?┨)4\/6┠/$1$scale_colors{3}$fourpad$reset┃/mg;
   $txt =~ s/^(.*?┗)(━┯━┛)/$1$bars$2/m;
 
   $txt =~ s/^(.*?┏)(┷┷━┓)/$1$bars$2/mg;
-  $txt =~ s/^(.*?┃) 3 ┃/$1$threepad┃/m;
-  $txt =~ s/^(.*?┨)1\/3┠/$1$rootpad┃/m;
+  $txt =~ s/^(.*?┃) 3 ┃/$1$scale_colors{2}$threepad$reset┃/m;
+  $txt =~ s/^(.*?┨)1\/3┠/$1$scale_colors{0}$rootpad$reset┃/m;
   $txt =~ s/^(.*?┗)(━┯━┛)/$1$bars$2/m;
 
   $txt =~ s/^(.*?╰─)/$1$pipes/m;
@@ -745,13 +745,13 @@ sub smBlock3Horiz {
   my $spaces = " " x ($len - 3);
   # sed replace the text and return
   $txt =~ s/^(.*?┏)(━━━┓)/$1$bars$2/mg;
-  $txt =~ s/^(.*?┃) 2 ┃/$1$twopad┃/m;
-  $txt =~ s/^(.*?┨)7\/2┠/$1$sevenpad┃/mg;
+  $txt =~ s/^(.*?┃) 2 ┃/$1$scale_colors{1}$twopad$reset┃/m;
+  $txt =~ s/^(.*?┨)7\/2┠/$1$scale_colors{6}$sevenpad$reset┃/mg;
   $txt =~ s/^(.*?┗)(━┯┯┛)/$1$bars$2/m;
 
   $txt =~ s/^(.*?┏)(━┷━┓)/$1$bars$2/mg;
-  $txt =~ s/^(.*?┃) 4 ┠/$1$fourpad┃/m;
-  $txt =~ s/^(.*?┨)2\/4┠/$1$secondpad┃/m;
+  $txt =~ s/^(.*?┃) 4 ┠/$1$scale_colors{3}$fourpad$reset┃/m;
+  $txt =~ s/^(.*?┨)2\/4┠/$1$scale_colors{1}$secondpad$reset┃/m;
   $txt =~ s/^(.*?┗)(━┯━┛)/$1$bars$2/m;
   
   $txt =~ s/^(.*?)(│╰▷)/$1$spaces$2/m;
@@ -775,11 +775,11 @@ sub smBlock4Horiz {
   # sed replace the text and return
   $txt =~ s/^(.*?┏)(━━━┓)/$1$bars$2/mg;
   $txt =~ s/^(.*?┃) - ┃/$1$emptypad┃/mg;
-  $txt =~ s/^(.*?┨)1\/5┃/$1$rootpad┃/mg;
+  $txt =~ s/^(.*?┨)1\/5┃/$1$scale_colors{0}$rootpad$reset┃/mg;
   $txt =~ s/^(.*?┺)(━┯━┛)/$1$bars$2/m;
 
   $txt =~ s/^(.*?┏)(┷┷━┓)/$1$bars$2/mg;
-  $txt =~ s/^(.*?┨) 5 ┠/$1$fivepad┃/m;
+  $txt =~ s/^(.*?┨) 5 ┠/$1$scale_colors{4}$fivepad$reset┃/m;
   $txt =~ s/^(.*?┗)(━━━┛)/$1$bars$2/m;
 
   $txt =~ s/^(.*?┼)/$1$pipes/m;
@@ -803,13 +803,13 @@ sub smBlock5Horiz {
   my $spaces = " " x ($len - 3);
   # sed replace the text and return
   $txt =~ s/^(.*?┏)(━━━┓)/$1$bars$2/mg;
-  $txt =~ s/^(.*?┃)4\/1┃/$1$fourpad┃/mg;
-  $txt =~ s/^(.*?┃)5\/1┃/$1$fivepad┃/mg;
+  $txt =~ s/^(.*?┃)4\/1┃/$1$scale_colors{3}$fourpad$reset┃/mg;
+  $txt =~ s/^(.*?┃)5\/1┃/$1$scale_colors{4}$fivepad$reset┃/mg;
   $txt =~ s/^(.*?┗┯┯)(━┛)/$1$bars$2/m;
 
   $txt =~ s/^(.*?┏┷┷)(━┓)/$1$bars$2/mg;
   $txt =~ s/^(.*?┃) - ┃/$1$emptypad┃/m;
-  $txt =~ s/^(.*?┨) 1 ┃/$1$rootpad┃/m;
+  $txt =~ s/^(.*?┨) 1 ┃/$1$scale_colors{0}$rootpad$reset┃/m;
   $txt =~ s/^(.*?┗━┯)(━┛)/$1$bars$2/m;
   return $txt;
 }
@@ -925,11 +925,14 @@ sub output_data {
   my ($scale_ref, $music_ref) = @_;
   my @scale_notes = @{$scale_ref};
   my %music = %{$music_ref};
-  my $scale_str = join" ", @scale_notes;
+  my $scale_str;
+  for my $idx (0..$#scale_notes) {
+    $scale_str .= $scale_colors{$idx} . $scale_notes[$idx] . $reset . " ";
+  }
   my $prog_str;
 
   foreach my $chord (0..6) {
-    $prog_str.= $music{$chord}{num} . " ";
+    $prog_str.= $scale_colors{$chord} . $music{$chord}{num} . $reset . " ";
   }
 
   my $chord_block = &chord_output(%music);
@@ -1056,7 +1059,7 @@ sub get_guitar_boards {
       }
     }
     unshift(@print_arr, $number_str);
-    unshift(@print_arr, "$music{$chord}{base} $music{$chord}{sig} - $music{$chord}{notes}");
+    unshift(@print_arr, "$scale_colors{$chord}$music{$chord}{base} $music{$chord}{sig} - $music{$chord}{notes}$reset");
     unshift(@print_arr, "");
     push (@fingerboards, \@print_arr);
   }
@@ -1222,7 +1225,7 @@ sub gen_keyboards {
     my $bottom_line = &bottom_line_pattern(\@chordNotes, \@colors);
 
     push(@txt, "");
-    push(@txt, $music{$key}{base} . " " . $music{$key}{sig});
+    push(@txt, $scale_colors{$key} . $music{$key}{base} . " " . $music{$key}{sig} . $reset);
     push(@txt, $top_line) for 1..1;
     push(@txt, $mid_line) for 1..3;
     push(@txt, $bottom_line) for 1..3;
