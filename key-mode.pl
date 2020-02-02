@@ -1037,7 +1037,7 @@ sub get_guitar_boards {
             }
           }
         } else {
-          for my $i (0..6) {
+          for my $i (0..$#scale_notes) {
             if ($note_shift[$fret] eq $chord_notes[$i]) {
               $matched = 1;
               $string .= $scale_colors{$i} . $note_shift[$fret] . $reset . $diffstr . "|";
