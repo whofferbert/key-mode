@@ -12,10 +12,17 @@ my $out_data;
 
 open my $FH, "<", $infile;
 
+my $count = 0;
 while (my $line = (<$FH>)) {
   if ($line =~ /!% (.*) %!/) {
+    $count++;
     my $string = '$ ' . $1 . "\n";
     my $output = `$1`;
+    my $retval = $? >> 8;
+    if ($retval != 0) {
+      say "There was a problem with command $count";
+      say $?;
+    }
     # remove ANSII escapes
     $output =~ s/\e\[(1;)?\d+m//g;
     #say $output;
