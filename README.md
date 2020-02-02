@@ -32,7 +32,7 @@ Usage:
   -m
   -mode [mode]
     [mode] can be any of: Major, Minor,
-    Phrygian, Super Locrian, Minor, Major, Lydian, Ionian, Locrian, Harmonic Minor, Aeolian, Dorian, Mixolydian
+    Minor, Major, Harmonic Minor, Mixolydian, Aeolian, Super Locrian, Locrian, Dorian, Ionian, Bebop Minor, Lydian, Phrygian
 
   -P
   -steps ["quoted pattern"]
@@ -138,19 +138,36 @@ $ ./key-mode.pl -key A -mode Phrygian
   Chords:
 
     | A Minor | A# Major | C Major | D Minor | E Dim ° | F Major | G Minor | 
-    | A C E   | A# D F   | C E G   | D F A   | E G A# | F A C   | G A# D  | 
+    | A C E   | A# D F   | C E G   | D F A   | E G A#  | F A C   | G A# D  | 
     | i       | II       | III     | iv      | v°      | VI      | vii     | 
-  
-  Progression Chart:
 
-                             iv  --  vii
-     vii ->  III ->   VI <       ><       >    i
-                              II  --   v°
+Tonal Relationships
+  ┏━━━━━━┓   ┏━━━━━━┓    ┏━━━━━━┓   ┏━━━━━━┓   ┏━━━━━━┓
+  ┃   v° ┃   ┃   VI ┃    ┃   II ┃   ┃      ┃   ┃  iv/1┃
+  ┃      ┃─▷─┨  v°/6┃──▷─┨ vii/2┃─▷─┨   i/5┃   ┃  v°/1┃
+  ┗━━━━┯┯┛   ┗━━━━┯━┛    ┗━━━━┯┯┛ ╭─┺━━━━┯━┛   ┗┯┯━━━━┛
+       │╰────────╮│           │╰▷─┼─────╮│      ││  
+       △         ▽△           △   │     ▽▽      △▽  
+  ┏━━━━┷━┓   ┏━━━┷┷━┓    ┏━━━━┷━┓ △ ┏━━━┷┷━┓   ┏┷┷━━━━┓
+  ┃   II ┃   ┃  III ┃    ┃   v° ┃─╯ ┃      ┃   ┃      ┃
+  ┃ vii/2┃─▷─┨   i/3┃──▷─┨  II/4┃─▷─┨   v° ┃─▷─┨    i ┃
+  ┗━━━━┯━┛   ┗━━━━┯━┛    ┗━━━━┯━┛   ┗━━━━━━┛   ┗━┯━━━━┛
+       ▽          ▽           ▽                  △  
+       ╰──────────┴───────────┴──────────────────╯  
 
-                                     D Minor  --  G Minor 
-    G Minor -> C Major -> F Major <           ><           > A Minor
-                                     A# Major  --  E Dim ° 
-
+Chord Progression
+  ┏━━━━━━━━━━┓   ┏━━━━━━━━━┓    ┏━━━━━━━━━━┓   ┏━━━━━━━━━┓   ┏━━━━━━━━━┓
+  ┃  E Dim ° ┃   ┃ F Major ┃    ┃ A# Major ┃   ┃         ┃   ┃D Minor/A┃
+  ┃          ┃─▷─┨E Dim °/F┃──▷─┨G Minor/A#┃─▷─┨A Minor/E┃   ┃E Dim °/A┃
+  ┗━━━━━━━━┯┯┛   ┗━━━━━━━┯━┛    ┗━━━━━━━━┯┯┛ ╭─┺━━━━━━━┯━┛   ┗┯┯━━━━━━━┛
+           │╰───────────╮│               │╰▷─┼────────╮│      ││  
+           △            ▽△               △   │        ▽▽      △▽  
+  ┏━━━━━━━━┷━┓   ┏━━━━━━┷┷━┓    ┏━━━━━━━━┷━┓ △ ┏━━━━━━┷┷━┓   ┏┷┷━━━━━━━┓
+  ┃ A# Major ┃   ┃ C Major ┃    ┃  E Dim ° ┃─╯ ┃         ┃   ┃         ┃
+  ┃G Minor/A#┃─▷─┨A Minor/C┃──▷─┨A# Major/D┃─▷─┨ E Dim ° ┃─▷─┨ A Minor ┃
+  ┗━━━━━━━━┯━┛   ┗━━━━━━━┯━┛    ┗━━━━━━━━┯━┛   ┗━━━━━━━━━┛   ┗━┯━━━━━━━┛
+           ▽             ▽               ▽                     △  
+           ╰─────────────┴───────────────┴─────────────────────╯  
 ```
 
 </p>
@@ -175,18 +192,36 @@ $ ./key-mode.pl -key E -name "Super Locrian" -steps "1 3 1 2 1 2 2" -fingerboard
   Chords:
 
     | E Major | F Major | G# Dim ° | A Minor | B Dim ° | C Aug + | D Minor | 
-    | E G# B  | F A C   | G# B D  | A C E   | B D F  | C E G#  | D F A   | 
+    | E G# B  | F A C   | G# B D   | A C E   | B D F   | C E G#  | D F A   | 
     | I       | II      | iii°     | iv      | v°      | VI+     | vii     | 
-  
-  Progression Chart:
 
-                             iv  --  vii
-     vii -> iii° ->  VI+ <       ><       >    I
-                              II  --   v°
+Tonal Relationships
+  ┏━━━━━━┓   ┏━━━━━━┓    ┏━━━━━━┓   ┏━━━━━━┓   ┏━━━━━━┓
+  ┃   v° ┃   ┃  VI+ ┃    ┃   II ┃   ┃      ┃   ┃  iv/1┃
+  ┃      ┃─▷─┨  v°/6┃──▷─┨ vii/2┃─▷─┨   I/5┃   ┃  v°/1┃
+  ┗━━━━┯┯┛   ┗━━━━┯━┛    ┗━━━━┯┯┛ ╭─┺━━━━┯━┛   ┗┯┯━━━━┛
+       │╰────────╮│           │╰▷─┼─────╮│      ││  
+       △         ▽△           △   │     ▽▽      △▽  
+  ┏━━━━┷━┓   ┏━━━┷┷━┓    ┏━━━━┷━┓ △ ┏━━━┷┷━┓   ┏┷┷━━━━┓
+  ┃   II ┃   ┃ iii° ┃    ┃   v° ┃─╯ ┃      ┃   ┃      ┃
+  ┃ vii/2┃─▷─┨   I/3┃──▷─┨  II/4┃─▷─┨   v° ┃─▷─┨    I ┃
+  ┗━━━━┯━┛   ┗━━━━┯━┛    ┗━━━━┯━┛   ┗━━━━━━┛   ┗━┯━━━━┛
+       ▽          ▽           ▽                  △  
+       ╰──────────┴───────────┴──────────────────╯  
 
-                                     A Minor  --  D Minor 
-    D Minor -> G# Dim ° -> C Aug + <           ><           > E Major
-                                     F Major  --  B Dim ° 
+Chord Progression
+  ┏━━━━━━━━━┓   ┏━━━━━━━━━━┓    ┏━━━━━━━━━┓   ┏━━━━━━━━━┓   ┏━━━━━━━━━┓
+  ┃ B Dim ° ┃   ┃  C Aug + ┃    ┃ F Major ┃   ┃         ┃   ┃A Minor/E┃
+  ┃         ┃─▷─┨ B Dim °/C┃──▷─┨D Minor/F┃─▷─┨E Major/B┃   ┃B Dim °/E┃
+  ┗━━━━━━━┯┯┛   ┗━━━━━━━━┯━┛    ┗━━━━━━━┯┯┛ ╭─┺━━━━━━━┯━┛   ┗┯┯━━━━━━━┛
+          │╰────────────╮│              │╰▷─┼────────╮│      ││  
+          △             ▽△              △   │        ▽▽      △▽  
+  ┏━━━━━━━┷━┓   ┏━━━━━━━┷┷━┓    ┏━━━━━━━┷━┓ △ ┏━━━━━━┷┷━┓   ┏┷┷━━━━━━━┓
+  ┃ F Major ┃   ┃ G# Dim ° ┃    ┃ B Dim ° ┃─╯ ┃         ┃   ┃         ┃
+  ┃D Minor/F┃─▷─┨E Major/G#┃──▷─┨F Major/A┃─▷─┨ B Dim ° ┃─▷─┨ E Major ┃
+  ┗━━━━━━━┯━┛   ┗━━━━━━━━┯━┛    ┗━━━━━━━┯━┛   ┗━━━━━━━━━┛   ┗━┯━━━━━━━┛
+          ▽              ▽              ▽                     △  
+          ╰──────────────┴──────────────┴─────────────────────╯  
 
 E Major - E G# B 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
@@ -288,18 +323,36 @@ $ ./key-mode.pl -mode Aeolian -key B -fingerboards -guitar-tuning "B E A D G B E
   Chords:
 
     | B Minor | C# Dim ° | D Major | E Minor | F# Minor | G Major | A Major | 
-    | B D F#  | C# E G  | D F# A  | E G B   | F# A C#  | G B D   | A C# E  | 
+    | B D F#  | C# E G   | D F# A  | E G B   | F# A C#  | G B D   | A C# E  | 
     | i       | ii°      | III     | iv      | v        | VI      | VII     | 
-  
-  Progression Chart:
 
-                             iv  --  VII
-     VII ->  III ->   VI <       ><       >    i
-                             ii°  --    v
+Tonal Relationships
+  ┏━━━━━━┓   ┏━━━━━━┓    ┏━━━━━━┓   ┏━━━━━━┓   ┏━━━━━━┓
+  ┃    v ┃   ┃   VI ┃    ┃  ii° ┃   ┃      ┃   ┃  iv/1┃
+  ┃      ┃─▷─┨   v/6┃──▷─┨ VII/2┃─▷─┨   i/5┃   ┃   v/1┃
+  ┗━━━━┯┯┛   ┗━━━━┯━┛    ┗━━━━┯┯┛ ╭─┺━━━━┯━┛   ┗┯┯━━━━┛
+       │╰────────╮│           │╰▷─┼─────╮│      ││  
+       △         ▽△           △   │     ▽▽      △▽  
+  ┏━━━━┷━┓   ┏━━━┷┷━┓    ┏━━━━┷━┓ △ ┏━━━┷┷━┓   ┏┷┷━━━━┓
+  ┃  ii° ┃   ┃  III ┃    ┃    v ┃─╯ ┃      ┃   ┃      ┃
+  ┃ VII/2┃─▷─┨   i/3┃──▷─┨ ii°/4┃─▷─┨    v ┃─▷─┨    i ┃
+  ┗━━━━┯━┛   ┗━━━━┯━┛    ┗━━━━┯━┛   ┗━━━━━━┛   ┗━┯━━━━┛
+       ▽          ▽           ▽                  △  
+       ╰──────────┴───────────┴──────────────────╯  
 
-                                     E Minor  --  A Major 
-    A Major -> D Major -> G Major <           ><           > B Minor
-                                     C# Dim °  --  F# Minor 
+Chord Progression
+  ┏━━━━━━━━━━┓   ┏━━━━━━━━━━┓    ┏━━━━━━━━━━┓   ┏━━━━━━━━━━┓   ┏━━━━━━━━━━┓
+  ┃ F# Minor ┃   ┃  G Major ┃    ┃ C# Dim ° ┃   ┃          ┃   ┃ E Minor/B┃
+  ┃          ┃─▷─┨F# Minor/G┃──▷─┨A Major/C#┃─▷─┨B Minor/F#┃   ┃F# Minor/B┃
+  ┗━━━━━━━━┯┯┛   ┗━━━━━━━━┯━┛    ┗━━━━━━━━┯┯┛ ╭─┺━━━━━━━━┯━┛   ┗┯┯━━━━━━━━┛
+           │╰────────────╮│               │╰▷─┼─────────╮│      ││  
+           △             ▽△               △   │         ▽▽      △▽  
+  ┏━━━━━━━━┷━┓   ┏━━━━━━━┷┷━┓    ┏━━━━━━━━┷━┓ △ ┏━━━━━━━┷┷━┓   ┏┷┷━━━━━━━━┓
+  ┃ C# Dim ° ┃   ┃  D Major ┃    ┃ F# Minor ┃─╯ ┃          ┃   ┃          ┃
+  ┃A Major/C#┃─▷─┨ B Minor/D┃──▷─┨C# Dim °/E┃─▷─┨ F# Minor ┃─▷─┨  B Minor ┃
+  ┗━━━━━━━━┯━┛   ┗━━━━━━━━┯━┛    ┗━━━━━━━━┯━┛   ┗━━━━━━━━━━┛   ┗━┯━━━━━━━━┛
+           ▽              ▽               ▽                      △  
+           ╰──────────────┴───────────────┴──────────────────────╯  
 
 B Minor - B D F# 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
@@ -409,18 +462,36 @@ $ ./key-mode.pl -mode Ionian -key C -fingerboards -guitar-tuning "C G C G C E"
   Chords:
 
     | C Major | D Minor | E Minor | F Major | G Major | A Minor | B Dim ° | 
-    | C E G   | D F A   | E G B   | F A C   | G B D   | A C E   | B D F  | 
+    | C E G   | D F A   | E G B   | F A C   | G B D   | A C E   | B D F   | 
     | I       | ii      | iii     | IV      | V       | vi      | vii°    | 
-  
-  Progression Chart:
 
-                             IV  -- vii°
-    vii° ->  iii ->   vi <       ><       >    I
-                              ii  --    V
+Tonal Relationships
+  ┏━━━━━━┓   ┏━━━━━━┓    ┏━━━━━━┓   ┏━━━━━━┓   ┏━━━━━━┓
+  ┃    V ┃   ┃   vi ┃    ┃   ii ┃   ┃      ┃   ┃  IV/1┃
+  ┃      ┃─▷─┨   V/6┃──▷─┨vii°/2┃─▷─┨   I/5┃   ┃   V/1┃
+  ┗━━━━┯┯┛   ┗━━━━┯━┛    ┗━━━━┯┯┛ ╭─┺━━━━┯━┛   ┗┯┯━━━━┛
+       │╰────────╮│           │╰▷─┼─────╮│      ││  
+       △         ▽△           △   │     ▽▽      △▽  
+  ┏━━━━┷━┓   ┏━━━┷┷━┓    ┏━━━━┷━┓ △ ┏━━━┷┷━┓   ┏┷┷━━━━┓
+  ┃   ii ┃   ┃  iii ┃    ┃    V ┃─╯ ┃      ┃   ┃      ┃
+  ┃vii°/2┃─▷─┨   I/3┃──▷─┨  ii/4┃─▷─┨    V ┃─▷─┨    I ┃
+  ┗━━━━┯━┛   ┗━━━━┯━┛    ┗━━━━┯━┛   ┗━━━━━━┛   ┗━┯━━━━┛
+       ▽          ▽           ▽                  △  
+       ╰──────────┴───────────┴──────────────────╯  
 
-                                     F Major  --  B Dim ° 
-    B Dim ° -> E Minor -> A Minor <           ><           > C Major
-                                     D Minor  --  G Major 
+Chord Progression
+  ┏━━━━━━━━━┓   ┏━━━━━━━━━┓    ┏━━━━━━━━━┓   ┏━━━━━━━━━┓   ┏━━━━━━━━━┓
+  ┃ G Major ┃   ┃ A Minor ┃    ┃ D Minor ┃   ┃         ┃   ┃F Major/C┃
+  ┃         ┃─▷─┨G Major/A┃──▷─┨B Dim °/D┃─▷─┨C Major/G┃   ┃G Major/C┃
+  ┗━━━━━━━┯┯┛   ┗━━━━━━━┯━┛    ┗━━━━━━━┯┯┛ ╭─┺━━━━━━━┯━┛   ┗┯┯━━━━━━━┛
+          │╰───────────╮│              │╰▷─┼────────╮│      ││  
+          △            ▽△              △   │        ▽▽      △▽  
+  ┏━━━━━━━┷━┓   ┏━━━━━━┷┷━┓    ┏━━━━━━━┷━┓ △ ┏━━━━━━┷┷━┓   ┏┷┷━━━━━━━┓
+  ┃ D Minor ┃   ┃ E Minor ┃    ┃ G Major ┃─╯ ┃         ┃   ┃         ┃
+  ┃B Dim °/D┃─▷─┨C Major/E┃──▷─┨D Minor/F┃─▷─┨ G Major ┃─▷─┨ C Major ┃
+  ┗━━━━━━━┯━┛   ┗━━━━━━━┯━┛    ┗━━━━━━━┯━┛   ┗━━━━━━━━━┛   ┗━┯━━━━━━━┛
+          ▽             ▽              ▽                     △  
+          ╰─────────────┴──────────────┴─────────────────────╯  
 
 C Major - C E G 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
