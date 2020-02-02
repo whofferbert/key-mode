@@ -32,7 +32,7 @@ Usage:
   -m
   -mode [mode]
     [mode] can be any of: Major, Minor,
-    Minor, Lydian, Locrian, Aeolian, Mixolydian, Super Locrian, Phrygian, Major, Ionian, Dorian, Harmonic Minor
+    Minor, Major, Ionian, Mixolydian, Dorian, Locrian, Super Locrian, Harmonic Minor, Phrygian, Lydian, Aeolian
 
   -P
   -steps ["quoted pattern"]
@@ -49,7 +49,7 @@ Options:
   -n
   -name ["Scale Name"]
     Scale Name can be any quoted string.
-    Provides the name to display when using a custom Step signature
+    Provides the name to display when using a custom Step signature.
 
   -color-1 [COLOR] ... -color-7 [COLOR]
     Assign a specific color to the given notes, when drawing the 
@@ -64,18 +64,18 @@ Options:
   -c
   -condense
     Print the guitar fingerboards or the piano keyboards in multiple columns.
-    Good for running with a wide terminal
+    Good for running with a wide terminal!
 
   -static-triad-colors
     Only print triads with the same set of colors, representing
     root, third, fifth.
 
-Guitar Options
+Guitar Options:
 
   -F
   -fingerboards
     For each chord in the scale, print a representation of a guitar
-    figerboard, with the notes displayed
+    figerboard, with the notes displayed.
 
   -g
   -guitar-tuning ["Open Notes"]
@@ -83,29 +83,29 @@ Guitar Options
     Not limited to 6 strings.
     Default is "E A D G B E"
 
-Keyboard Options
+Keyboard Options:
 
   -K
   -keyboards
     For each chord in the scale, print a representation of a piano
-    keyboard, with the notes highlighed on the keyboard
+    keyboard, with the given notes highlighed on the keyboard.
 
 
 Examples:
 
-  Get info on A Dorian
+  Get info on A Dorian:
     key-mode.pl -key A -mode dorian
 
-  Get info on E Aeolian, along with fretboard note positions
+  Get info on E Aeolian, along with fretboard note positions:
     key-mode.pl -key E -mode Aeolian -fingerboards
 
-  Get info about a user-provided scale
+  Get info about a user-provided scale:
     key-mode.pl -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian"
 
   Get info and fingerboard patterns for an 8 string guitar with weird tuning:
     key-mode.pl -key B -mode Mixolydian -fingerboards -guitar-tuning "E A D A D G B E"
  
-  Get info about a keyboard, condensed
+  Get info about a keyboard, condensed:
     key-mode.pl -key G -mode Phrygian -keyboards -condense
  
   The argument handling also supports shorthand addressing on most options.
