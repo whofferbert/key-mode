@@ -701,8 +701,15 @@ sub get_guitar_boards {
         if (scalar @chord_notes == 3) {
           for my $i (0..2) {
             if ($note_shift[$fret] eq $chord_notes[$i]) {
+              my $colors;
+              if ($static_triad_colors) {
+                $colors = $scale_colors{$i * 2};
+              } else {
+                my $idx = &array_search($chord_notes[$i], @scale_notes);
+                $colors = $scale_colors{$idx};
+              }
               $matched = 1;
-              $string .= $scale_colors{$i * 2} . $note_shift[$fret] . $reset . $diffstr . "|";
+              $string .= $colors . $note_shift[$fret] . $reset . $diffstr . "|";
             }
           }
         } else {
