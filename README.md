@@ -5,7 +5,8 @@ and progressions, based on input key and mode.
 
 Custom step patterns can be provided, to get info on non-built-in scales.
 
-The help text is referenced here for clarity:
+<details><summary>The help text is referenced here for clarity:</summary>
+<p>
 
 ```bash
 $ ./key-mode.pl -help
@@ -30,7 +31,7 @@ Usage:
   -m
   -mode [mode]
     [mode] can be any of: Major, Minor,
-    Major, Mixolydian, Aeolian, Super Locrian, Minor, Phrygian, Ionian, Lydian, Locrian, Harmonic Minor, Dorian
+    Major, Dorian, Minor, Ionian, Super Locrian, Aeolian, Harmonic Minor, Lydian, Phrygian, Locrian, Mixolydian
 
   -P
   -steps ["quoted pattern"]
@@ -111,6 +112,9 @@ Examples:
     key-mode.pl -b -R Db -m Major -F -K -c
  
 ```
+
+</p>
+</details>
 
 # Runtime Examples
 Click the sections to expand their details

@@ -5,11 +5,15 @@ and progressions, based on input key and mode.
 
 Custom step patterns can be provided, to get info on non-built-in scales.
 
-The help text is referenced here for clarity:
+<details><summary>The help text is referenced here for clarity:</summary>
+<p>
 
 ```bash
 !% ./key-mode.pl -help %!
 ```
+
+</p>
+</details>
 
 # Runtime Examples
 Click the sections to expand their details
