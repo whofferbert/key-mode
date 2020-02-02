@@ -970,7 +970,7 @@ sub output_data {
   }
   my $prog_str;
 
-  foreach my $chord (0..6) {
+  foreach my $chord (0..$#scale_notes) {
     $prog_str.= $scale_colors{$chord} . $music{$chord}{num} . $reset . " ";
   }
 
