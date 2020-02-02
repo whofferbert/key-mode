@@ -1110,22 +1110,6 @@ sub getFgBgColor {
   return ($color_backgrounds{$idx}, $color_font_bg_correlator{$idx});
 }
 
-sub getFgBgColor_old {
-  my ($color) = @_;
-  if ($color =~ /$ansiColorRegex/g) {
-    my $colorBase = $1;
-
-    if (! defined $colorBase) {
-      # yellow?
-      say "failed to do the thing on $color";
-      return($color_backgrounds{"33m"}, $color_font_bg_correlator{"33m"});
-    }
-    if (exists $color_backgrounds{$colorBase} && exists $color_font_bg_correlator{$colorBase}) {
-      return ($color_backgrounds{$colorBase}, $color_font_bg_correlator{$colorBase});
-    }
-  }
-}
-
 sub mid_line_pattern {
   my ($noteArrRef, $colorArrRef, $scaleNotesRef) = @_;
   my @scale = @{$scaleNotesRef};
