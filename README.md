@@ -32,7 +32,7 @@ Usage:
   -m
   -mode [mode]
     [mode] can be any of: Major, Minor,
-    Minor, Major, Ionian, Mixolydian, Dorian, Locrian, Super Locrian, Harmonic Minor, Phrygian, Lydian, Aeolian
+    Phrygian, Super Locrian, Minor, Major, Lydian, Ionian, Locrian, Harmonic Minor, Aeolian, Dorian, Mixolydian
 
   -P
   -steps ["quoted pattern"]
@@ -160,7 +160,7 @@ $ ./key-mode.pl -key A -mode Phrygian
 ## E Super Locrian, provided at the CLI
 There is coloization to the fingerboard output at the CLI, it just does not translate properly to the markdown. The root, third, and fifth notes are all assigned their own colors, for clarity.
 
-<details><summary>./key-mode.pl -steps "1 3 1 2 1 2 2" -key E -name "Super Locrian" -fingerboards</summary>
+<details><summary>./key-mode.pl -key E -name "Super Locrian" -steps "1 3 1 2 1 2 2" -fingerboards</summary>
 <p>
 
 ```bash
