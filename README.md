@@ -5,7 +5,8 @@ and progressions, based on input key and mode.
 
 Custom step patterns can be provided, to get info on non-built-in scales.
 
-<details><summary>The help text is referenced here for clarity:</summary>
+### Help
+<details><summary>The (extensive) help text is referenced here for clarity:</summary>
 <p>
 
 ```bash
@@ -31,7 +32,7 @@ Usage:
   -m
   -mode [mode]
     [mode] can be any of: Major, Minor,
-    Major, Dorian, Minor, Ionian, Super Locrian, Aeolian, Harmonic Minor, Lydian, Phrygian, Locrian, Mixolydian
+    Minor, Lydian, Locrian, Aeolian, Mixolydian, Super Locrian, Phrygian, Major, Ionian, Dorian, Harmonic Minor
 
   -P
   -steps ["quoted pattern"]
@@ -117,7 +118,7 @@ Examples:
 </details>
 
 # Runtime Examples
-Click the sections to expand their details
+You can click the sections to expand their details.
 
 ## A Phrygian, from built in scales
 
