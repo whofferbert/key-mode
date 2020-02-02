@@ -1239,17 +1239,23 @@ sub gen_keyboards {
   my @scaleNotes = @{$noteRef};
   my %music = %{$musicRef};
   my @txt_arr;
+  my $nextKey = scalar keys %music;
+  $music{$nextKey}{notes} = join" ", @scaleNotes;
+  $music{$nextKey}{base} = $in_key;
+  $music{$nextKey}{sig} = $in_mode;
   for my $key (sort keys %music) {
     my @txt;
     my @chordNotes = split(/\s+/, $music{$key}{notes});
     my @colors;
     if ($static_triad_colors) {
       @colors = ($scale_colors{0},$scale_colors{2},$scale_colors{4});
-    } else {
+    } elsif(scalar @chordNotes < 4) {
       my $idxA = &array_search($chordNotes[0], @scaleNotes);
       my $idxB = &array_search($chordNotes[1], @scaleNotes);
       my $idxC = &array_search($chordNotes[2], @scaleNotes);
-      @colors = ($scale_colors{$idxA}, $scale_colors{$idxB}, $scale_colors{$idxC});
+      @colors = ($color_backgrounds{$idxA}, $color_backgrounds{$idxB}, $color_backgrounds{$idxC});
+    } else { 
+      @colors = map {$scale_colors{$_}} sort keys %scale_colors;
     }
     my $top_line = &top_line_pattern;
     my $mid_line = &mid_line_pattern(\@chordNotes, \@colors, \@scaleNotes);
@@ -1262,16 +1268,16 @@ sub gen_keyboards {
     push(@txt, $bottom_line) for 1..3;
     push(@txt_arr, \@txt);
   }
-  {
-    my @colors = map {$scale_colors{$_}} sort keys %scale_colors;
-    my @txt;
-    push(@txt, "");
-    push(@txt, "Key: " . $music{0}{base} . " - Scale: " . $in_mode);
-    push(@txt, &top_line_pattern) for 1..1;
-    push(@txt, &mid_line_pattern(\@scaleNotes, \@colors, \@scaleNotes)) for 1..3;
-    push(@txt, &bottom_line_pattern(\@scaleNotes, \@colors, \@scaleNotes)) for 1..3;
-    push(@txt_arr, \@txt);
-  }
+  #{
+  #  my @colors = map {$scale_colors{$_}} sort keys %scale_colors;
+  #  my @txt;
+  #  push(@txt, "");
+  #  push(@txt, "Key: " . $music{0}{base} . " - Scale: " . $in_mode);
+  #  push(@txt, &top_line_pattern) for 1..1;
+  #  push(@txt, &mid_line_pattern(\@scaleNotes, \@colors, \@scaleNotes)) for 1..3;
+  #  push(@txt, &bottom_line_pattern(\@scaleNotes, \@colors, \@scaleNotes)) for 1..3;
+  #  push(@txt_arr, \@txt);
+  #}
   return (@txt_arr);
 }
 
