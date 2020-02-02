@@ -62,11 +62,15 @@ my %mode_hash = (
   'Super Locrian'	=> [1, 3, 1, 2, 1, 2, 2],
 
   'Harmonic Minor'	=> [2, 1, 2, 2, 1, 3, 1], 
+
+  'Bebop Minor'		=> [2, 1, 1, 1, 2, 2, 1, 2],
+
   #''	=> [], 
 );
 
 # numerals for chart representations
-my @numerals = qw (I II III IV V VI VII);
+#my @numerals = qw (I II III IV V VI VII);
+my @numerals = qw (I II III IV V VI VII VIII);
 
 # guitar options...
 my ($show_fingerboard, $condense_boards);
@@ -115,7 +119,7 @@ my %colors = (
 
 my %color_backgrounds = (
   #'30m' => $colors{BGBLACK},
-  '30m' => "\x1b[48;5;235m",
+  '30m' => "\e[38;5;235m",
   '31m' => $colors{BGRED},
   '32m' => $colors{BGGREEN},
   '33m' => $colors{BGYELLOW},
@@ -144,6 +148,9 @@ my %scale_colors = (
   '4' => $colors{BGREEN},
   '5' => $colors{BMAJENTA},
   '6' => $colors{BCYAN},
+  '7' => "\e[38;5;109m",
+  '8' => "\e[38;5;109m",
+  '9' => "\e[38;5;36m",
 );
 
 my $ansiColorRegex = '\e\[(?:1;)?(\d+m)|\x1b\[\d+;\d+;(\d+m)';
@@ -310,7 +317,9 @@ sub check_required_args {		# handle leftover @ARGV stuff here if need be
     &err("$prog requires a valid -key");
   }
   if (@in_steps) {
-    &err("Unexpected number of steps in -steps!") unless scalar @in_steps == 7;
+    unless (@in_steps == 7 || @in_steps == 8) {
+      &err("Unexpected number of steps in -steps!");
+    }
     &err("Steps don't add up to 12!") unless (eval join"+",@in_steps) == 12;
   }
 
@@ -433,6 +442,47 @@ sub shift_scales {
   return(@scale_notes);
 }
 
+# TODO this might be better as some combination check,
+# then have a preferred order perhaps?
+sub find_best_chord {
+  my @scaleNotes = @_;
+  my $root = $scaleNotes[0];
+  my $root_note_index = &array_search($root, @notes);
+  my @adj_scale = &rotate_array_left($root_note_index, @notes);
+  my $skip = 2;
+  my $third = $scaleNotes[$skip];
+  my $idx3 = &array_search($third, @adj_scale);
+  while ($idx3 < 3) {
+    $skip++;
+    $third = $scaleNotes[$skip];
+    $idx3 = &array_search($third, @adj_scale);
+  }
+  # prefer major over minor?
+  #if (&array_search($scaleNotes[$skip + 1], @adj_scale) == 4) {
+  #  say "Skipping another on the third, $third to" . $scaleNotes[$skip + 1],;
+  #  $skip++;
+  #  $third = $scaleNotes[$skip];
+  #  $idx3 = &array_search($third, @adj_scale);
+  #}
+  my $fifthSkip = 2;
+  my $fifth = $scaleNotes[$skip + $fifthSkip];
+  my $idx5 = &array_search($fifth, @adj_scale);
+  while ($idx5 - $idx3 < 3) {
+    $fifthSkip++;
+    $fifth = $scaleNotes[$skip + $fifthSkip];
+    $idx5 = &array_search($fifth, @adj_scale);
+  }
+  my $fifthCheck = &array_search($scaleNotes[$skip + $fifthSkip + 1], @adj_scale);
+  # prefer minor to dim
+  if ($fifthCheck == 7) {
+    #say "root $root ; Skipping another on the fifth, $fifth to " . $fifthCheck;
+    $fifthSkip++;
+    $fifth = $scaleNotes[$skip + $fifthSkip];
+    $idx5 = &array_search($fifth, @adj_scale);
+  }
+  return($root, $third, $fifth);
+}
+
 sub find_progression {
   my (@scale_notes) = @_;
 
@@ -450,10 +500,19 @@ sub find_progression {
     my @adj_notes = &rotate_array_left($note_degree, @scale_notes);
 
     my @chord;
-    $chord[0] = $adj_notes[0];
-    $chord[1] = $adj_notes[2];
-    $chord[2] = $adj_notes[4];
-  
+    my @scaleSteps;
+    if (defined $in_mode && exists $mode_hash{$in_mode}) {
+      @scaleSteps = @{$mode_hash{$in_mode}};
+    } else {
+      @scaleSteps = @in_steps;
+    }
+    if (scalar @scaleSteps == 8) {
+      @chord = &find_best_chord(@adj_notes);
+    } else {
+      $chord[0] = $adj_notes[0];
+      $chord[1] = $adj_notes[2];
+      $chord[2] = $adj_notes[4];
+    }
     push(@progression, \@chord);
   }
 
@@ -468,22 +527,15 @@ sub find_tonality {
   # TODO this could probably be an array of hashes
   my $n = 0;
   foreach my $chord (@progression) {
-  
     my $first_note = @{$chord}[0];
-    my $first_note_degree;
-    for (my $i=0 ; $i <= $#notes ; $i++) {
-      $first_note_degree = $i if ($notes[$i] eq $first_note)
-    }
   
+    my $first_note_degree = &array_search($first_note, @notes);
     my @adj_scale = &rotate_array_left($first_note_degree, @notes);
   
     my $pattern;
     my $chord_notes;
     foreach my $note (@{$chord}){
-      my $note_degree;
-      for (my $i=0 ; $i <= $#adj_scale ; $i++) {
-        $note_degree = $i if ($adj_scale[$i] eq $note)
-      }
+      my $note_degree = &array_search($note, @adj_scale);
       $pattern .= $note_degree;
       $chord_notes .= "$note ";
     }
@@ -693,9 +745,10 @@ sub get_guitar_boards {
 
   my @repeat_notes = @notes;
   push(@repeat_notes, @notes);
-  $music{7}{notes} = join" ", @scale_notes;
-  $music{7}{base} = $in_key;
-  $music{7}{sig} = $in_mode;
+  my $nextKey = scalar keys %music;
+  $music{$nextKey}{notes} = join" ", @scale_notes;
+  $music{$nextKey}{base} = $in_key;
+  $music{$nextKey}{sig} = $in_mode;
 
   for my $chord (sort keys %music) {
     my $chord_notes = $music{$chord}{notes};
@@ -722,6 +775,9 @@ sub get_guitar_boards {
                 $colors = $scale_colors{$idx};
               }
               $matched = 1;
+              if (! defined $colors) {
+                &warn("Got bad stuff from fret " . ($fret + 1) . " and note " . $chord_notes[$i] . " with scale notes: " . join",",@scale_notes);
+              }
               $string .= $colors . $note_shift[$fret] . $reset . $diffstr . "|";
             }
           }
@@ -795,6 +851,10 @@ sub getFgBgColor {
   my ($color) = @_;
   if ($color =~ /$ansiColorRegex/) {
     my $colorBase = $1;
+    if (! defined $colorBase) {
+      # yellow?
+      return($color_backgrounds{"33m"}, $color_font_bg_correlator{"33m"});
+    }
     if (exists $color_backgrounds{$colorBase} && exists $color_font_bg_correlator{$colorBase}) {
       return ($color_backgrounds{$colorBase}, $color_font_bg_correlator{$colorBase});
     }
@@ -969,6 +1029,7 @@ sub main {
   my @scale_notes = &shift_scales;
   my @progression = &find_progression(@scale_notes);
   my %music = &find_tonality(@progression);
+  #say Dumper(\%music);
   &output_data(\@scale_notes, \%music);
   if ($show_fingerboard) {
     my @fboard = &get_guitar_boards(\@scale_notes, \%music);
