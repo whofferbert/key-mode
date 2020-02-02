@@ -8,7 +8,7 @@ Custom step patterns can be provided, to get info on non-built-in scales.
 The help text is referenced here for clarity:
 
 ```bash
-$ ./key-mode -help
+$ ./key-mode.pl -help
 
   This script can print out information about progressions
   and chord relationships, based on an input key and mode.
@@ -16,70 +16,99 @@ $ ./key-mode -help
   Additionally, you can provide your own step pattern and key
   if desired.
 
-Usage:
-  key-mode -key [note] -mode [mode]
-  key-mode -key [note] -steps ["quoted pattern"]
+  Most options can be mixed and matched as you might expect.
 
-  Key:
+Usage:
+  key-mode.pl -key [note] -mode [mode]
+  key-mode.pl -key [note] -steps ["quoted pattern"]
+
+  -R
+  -key [note]
     [note] can be any of:
     A A# B C C# D D# E F F# G G#
 
-  Mode:
-    [mode] can be any of:
-    Ionian Dorian Phrygian Lydian Mixolydian Aeolian Locrian
+  -m
+  -mode [mode]
+    [mode] can be any of: Major, Minor,
+    Major, Mixolydian, Aeolian, Super Locrian, Minor, Phrygian, Ionian, Lydian, Locrian, Harmonic Minor, Dorian
 
-  Steps:
+  -P
+  -steps ["quoted pattern"]
     ["quoted pattern"] can consist of any quoted and space
     delimited set of 7 numbers which add up to 12, to allow
     for extrapolation of non-built in modes.
 
-Additional Options
+Options:
 
+  -b
+  -flat
+    Use flat notes inseted of sharp.
+
+  -n
   -name ["Scale Name"]
     Scale Name can be any quoted string.
     Provides the name to display when using a custom Step signature
 
-  -fingerboards
-    For each chord in the scale, print a representation of a guitar
-    figerboard, with the notes displayed
-
-  -guitar-tuning ["Open Notes"]
-    Open notes can be any quoted list of notes, low to high.
-    Not limited to 6 strings.
-    Default is "E A D G B E"
-
-  -root-color [COLOR]
-    Default is BRED
-  -third-color [COLOR]
-    Default is BYELLOW
-  -fifth-color [COLOR]
-    Default is BGREEN
-
-    Assign a specific color to the root/third/fifth notes, when
-    drawing the guitar fingerboard patterns.
+  -color-1 [COLOR] ... -color-7 [COLOR]
+    Assign a specific color to the given notes, when drawing the 
+    guitar fingerboard patterns. 
+    -color-1 is the root, -color-3 is the third, etc.
     Colors may be any of:
       DEFAULT, BOLD, BLACK, RED, BLUE, YELLOW, GREEN, 
       MAJENTA, CYAN, WHITE, BBLACK, BRED, BBLUE, BYELLOW, 
       BGREEN, BMAJENTA, BCYAN, BWHITE, BGDEFAULT, BGBLACK, BGRED, 
       BGBLUE, BGYELLOW, BGGREEN, BGMAJENTA, BGCYAN, BGWHITE
 
-  -condense-boards
-    Print the guitar fingerboards in multiple columns
+  -c
+  -condense
+    Print the guitar fingerboards or the piano keyboards in multiple columns.
     Good for running with a wide terminal
+
+  -static-triad-colors
+    Only print triads with the same set of colors, representing
+    root, third, fifth.
+
+Guitar Options
+
+  -F
+  -fingerboards
+    For each chord in the scale, print a representation of a guitar
+    figerboard, with the notes displayed
+
+  -g
+  -guitar-tuning ["Open Notes"]
+    Open notes can be any quoted list of notes, low to high.
+    Not limited to 6 strings.
+    Default is "E A D G B E"
+
+Keyboard Options
+
+  -K
+  -keyboards
+    For each chord in the scale, print a representation of a piano
+    keyboard, with the notes highlighed on the keyboard
+
 
 Examples:
 
   Get info on A Dorian
-    key-mode -key A -mode dorian
+    key-mode.pl -key A -mode dorian
 
   Get info on E Aeolian, along with fretboard note positions
-    key-mode -key E -mode Aeolian -fingerboards
+    key-mode.pl -key E -mode Aeolian -fingerboards
 
   Get info about a user-provided scale
-    key-mode -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian"
- 
+    key-mode.pl -key E -steps "1 3 1 2 1 2 2" -name "Super Locrian"
+
   Get info and fingerboard patterns for an 8 string guitar with weird tuning:
-    key-mode -key B -mode Mixolydian -fingerboards -guitar-tuning "E A D A D G B E"
+    key-mode.pl -key B -mode Mixolydian -fingerboards -guitar-tuning "E A D A D G B E"
+ 
+  Get info about a keyboard, condensed
+    key-mode.pl -key G -mode Phrygian -keyboards -condense
+ 
+  The argument handling also supports shorthand addressing on most options.
+  To see condensed keyboard and fingerboard renditions of a Db Major scale: 
+    key-mode.pl -b -R Db -m Major -F -K -c
  
 ```
 
@@ -89,11 +118,11 @@ Click the sections to expand their details
 ## A Phrygian, from built in scales
 
 
-<details><summary>./key-mode -key A -mode Phrygian</summary>
+<details><summary>./key-mode.pl -key A -mode Phrygian</summary>
 <p>
 
 ```bash
-$ ./key-mode -key A -mode Phrygian
+$ ./key-mode.pl -key A -mode Phrygian
 
   A  -  Phrygian
   
@@ -104,14 +133,18 @@ $ ./key-mode -key A -mode Phrygian
   Chords:
 
     | A Minor | A# Major | C Major | D Minor | E Dim ° | F Major | G Minor | 
-    | A C E   | A# D F   | C E G   | D F A   | E G A#  | F A C   | G A# D  | 
+    | A C E   | A# D F   | C E G   | D F A   | E G A# | F A C   | G A# D  | 
     | i       | II       | III     | iv      | v°      | VI      | vii     | 
   
   Progression Chart:
 
-                         iv  -  vii
-    vii -> III -> VI <      ><       > i
-                         II  -  v°
+                             iv  --  vii
+     vii ->  III ->   VI <       ><       >    i
+                              II  --   v°
+
+                                     D Minor  --  G Minor 
+    G Minor -> C Major -> F Major <           ><           > A Minor
+                                     A# Major  --  E Dim ° 
 
 ```
 
@@ -122,11 +155,11 @@ $ ./key-mode -key A -mode Phrygian
 ## E Super Locrian, provided at the CLI
 There is coloization to the fingerboard output at the CLI, it just does not translate properly to the markdown. The root, third, and fifth notes are all assigned their own colors, for clarity.
 
-<details><summary>./key-mode -steps "1 3 1 2 1 2 2" -key E -name "Super Locrian" -fingerboards</summary>
+<details><summary>./key-mode.pl -steps "1 3 1 2 1 2 2" -key E -name "Super Locrian" -fingerboards</summary>
 <p>
 
 ```bash
-$ ./key-mode -steps "1 3 1 2 1 2 2" -key E -name "Super Locrian" -fingerboards
+$ ./key-mode.pl -key E -name "Super Locrian" -steps "1 3 1 2 1 2 2" -fingerboards
 
   E  -  Super Locrian
   
@@ -137,14 +170,18 @@ $ ./key-mode -steps "1 3 1 2 1 2 2" -key E -name "Super Locrian" -fingerboards
   Chords:
 
     | E Major | F Major | G# Dim ° | A Minor | B Dim ° | C Aug + | D Minor | 
-    | E G# B  | F A C   | G# B D   | A C E   | B D F   | C E G#  | D F A   | 
+    | E G# B  | F A C   | G# B D  | A C E   | B D F  | C E G#  | D F A   | 
     | I       | II      | iii°     | iv      | v°      | VI+     | vii     | 
   
   Progression Chart:
 
-                         iv  -  vii
-    vii -> iii° -> VI+ <      ><       > I
-                         II  -  v°
+                             iv  --  vii
+     vii -> iii° ->  VI+ <       ><       >    I
+                              II  --   v°
+
+                                     A Minor  --  D Minor 
+    D Minor -> G# Dim ° -> C Aug + <           ><           > E Major
+                                     F Major  --  B Dim ° 
 
 E Major - E G# B 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
@@ -155,6 +192,7 @@ B--|---|---|---|---|E--|---|---|---|G#-|---|---|B--|---|---|---|
 ---|---|B--|---|---|---|---|E--|---|---|---|G#-|---|---|B--|---|
 E--|---|---|---|G#-|---|---|B--|---|---|---|---|E--|---|---|---|
 
+
 F Major - F A C 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
 ---|F--|---|---|---|A--|---|---|C--|---|---|---|---|F--|---|---|
@@ -163,6 +201,7 @@ F Major - F A C
 ---|---|---|F--|---|---|---|A--|---|---|C--|---|---|---|---|F--|
 A--|---|---|C--|---|---|---|---|F--|---|---|---|A--|---|---|C--|
 ---|F--|---|---|---|A--|---|---|C--|---|---|---|---|F--|---|---|
+
 
 G# Dim ° - G# B D 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
@@ -173,6 +212,7 @@ D--|---|---|---|---|---|G#-|---|---|B--|---|---|D--|---|---|---|
 ---|---|B--|---|---|D--|---|---|---|---|---|G#-|---|---|B--|---|
 ---|---|---|---|G#-|---|---|B--|---|---|D--|---|---|---|---|---|
 
+
 A Minor - A C E 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
 E--|---|---|---|---|A--|---|---|C--|---|---|---|E--|---|---|---|
@@ -181,6 +221,7 @@ E--|---|---|---|---|A--|---|---|C--|---|---|---|E--|---|---|---|
 ---|---|E--|---|---|---|---|A--|---|---|C--|---|---|---|E--|---|
 A--|---|---|C--|---|---|---|E--|---|---|---|---|A--|---|---|C--|
 E--|---|---|---|---|A--|---|---|C--|---|---|---|E--|---|---|---|
+
 
 B Dim ° - B D F 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
@@ -191,6 +232,7 @@ D--|---|---|F--|---|---|---|---|---|B--|---|---|D--|---|---|F--|
 ---|---|B--|---|---|D--|---|---|F--|---|---|---|---|---|B--|---|
 ---|F--|---|---|---|---|---|B--|---|---|D--|---|---|F--|---|---|
 
+
 C Aug + - C E G# 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
 E--|---|---|---|G#-|---|---|---|C--|---|---|---|E--|---|---|---|
@@ -200,6 +242,7 @@ E--|---|---|---|G#-|---|---|---|C--|---|---|---|E--|---|---|---|
 ---|---|---|C--|---|---|---|E--|---|---|---|G#-|---|---|---|C--|
 E--|---|---|---|G#-|---|---|---|C--|---|---|---|E--|---|---|---|
 
+
 D Minor - D F A 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
 ---|F--|---|---|---|A--|---|---|---|---|D--|---|---|F--|---|---|
@@ -208,6 +251,7 @@ D Minor - D F A
 D--|---|---|F--|---|---|---|A--|---|---|---|---|D--|---|---|F--|
 A--|---|---|---|---|D--|---|---|F--|---|---|---|A--|---|---|---|
 ---|F--|---|---|---|A--|---|---|---|---|D--|---|---|F--|---|---|
+
 
 E Super Locrian - E F G# A B C D
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
@@ -224,11 +268,11 @@ E--|F--|---|---|G#-|A--|---|B--|C--|---|D--|---|E--|F--|---|---|
 </details>
 
 ## B Aeolian (Minor) on a 7 string guitar
-<details><summary>./key-mode -mode Aeolian -key B -fingerboards -guitar-tuning "B E A D G B E"</summary>
+<details><summary>./key-mode.pl -mode Aeolian -key B -fingerboards -guitar-tuning "B E A D G B E"</summary>
 <p>
 
 ```bash
-$ ./key-mode -mode Aeolian -key B -fingerboards -guitar-tuning "B E A D G B E"
+$ ./key-mode.pl -mode Aeolian -key B -fingerboards -guitar-tuning "B E A D G B E"
 
   B  -  Aeolian
   
@@ -239,14 +283,18 @@ $ ./key-mode -mode Aeolian -key B -fingerboards -guitar-tuning "B E A D G B E"
   Chords:
 
     | B Minor | C# Dim ° | D Major | E Minor | F# Minor | G Major | A Major | 
-    | B D F#  | C# E G   | D F# A  | E G B   | F# A C#  | G B D   | A C# E  | 
+    | B D F#  | C# E G  | D F# A  | E G B   | F# A C#  | G B D   | A C# E  | 
     | i       | ii°      | III     | iv      | v        | VI      | VII     | 
   
   Progression Chart:
 
-                         iv  -  VII
-    VII -> III -> VI <      ><       > i
-                         ii°  -  v
+                             iv  --  VII
+     VII ->  III ->   VI <       ><       >    i
+                             ii°  --    v
+
+                                     E Minor  --  A Major 
+    A Major -> D Major -> G Major <           ><           > B Minor
+                                     C# Dim °  --  F# Minor 
 
 B Minor - B D F# 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
@@ -258,6 +306,7 @@ D--|---|---|---|F#-|---|---|---|---|B--|---|---|D--|---|---|---|
 ---|---|F#-|---|---|---|---|B--|---|---|D--|---|---|---|F#-|---|
 B--|---|---|D--|---|---|---|F#-|---|---|---|---|B--|---|---|D--|
 
+
 C# Dim ° - C# E G 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
 E--|---|---|G--|---|---|---|---|---|C#-|---|---|E--|---|---|G--|
@@ -267,6 +316,7 @@ G--|---|---|---|---|---|C#-|---|---|E--|---|---|G--|---|---|---|
 ---|---|---|---|C#-|---|---|E--|---|---|G--|---|---|---|---|---|
 E--|---|---|G--|---|---|---|---|---|C#-|---|---|E--|---|---|G--|
 ---|---|C#-|---|---|E--|---|---|G--|---|---|---|---|---|C#-|---|
+
 
 D Major - D F# A 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
@@ -278,6 +328,7 @@ A--|---|---|---|---|D--|---|---|---|F#-|---|---|A--|---|---|---|
 ---|---|F#-|---|---|A--|---|---|---|---|D--|---|---|---|F#-|---|
 ---|---|---|D--|---|---|---|F#-|---|---|A--|---|---|---|---|D--|
 
+
 E Minor - E G B 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
 E--|---|---|G--|---|---|---|B--|---|---|---|---|E--|---|---|G--|
@@ -287,6 +338,7 @@ G--|---|---|---|B--|---|---|---|---|E--|---|---|G--|---|---|---|
 ---|---|B--|---|---|---|---|E--|---|---|G--|---|---|---|B--|---|
 E--|---|---|G--|---|---|---|B--|---|---|---|---|E--|---|---|G--|
 B--|---|---|---|---|E--|---|---|G--|---|---|---|B--|---|---|---|
+
 
 F# Minor - F# A C# 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
@@ -298,6 +350,7 @@ A--|---|---|---|C#-|---|---|---|---|F#-|---|---|A--|---|---|---|
 ---|---|F#-|---|---|A--|---|---|---|C#-|---|---|---|---|F#-|---|
 ---|---|C#-|---|---|---|---|F#-|---|---|A--|---|---|---|C#-|---|
 
+
 G Major - G B D 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
 ---|---|---|G--|---|---|---|B--|---|---|D--|---|---|---|---|G--|
@@ -308,6 +361,7 @@ D--|---|---|---|---|G--|---|---|---|B--|---|---|D--|---|---|---|
 ---|---|---|G--|---|---|---|B--|---|---|D--|---|---|---|---|G--|
 B--|---|---|D--|---|---|---|---|G--|---|---|---|B--|---|---|D--|
 
+
 A Major - A C# E 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
 E--|---|---|---|---|A--|---|---|---|C#-|---|---|E--|---|---|---|
@@ -317,6 +371,7 @@ E--|---|---|---|---|A--|---|---|---|C#-|---|---|E--|---|---|---|
 A--|---|---|---|C#-|---|---|E--|---|---|---|---|A--|---|---|---|
 E--|---|---|---|---|A--|---|---|---|C#-|---|---|E--|---|---|---|
 ---|---|C#-|---|---|E--|---|---|---|---|A--|---|---|---|C#-|---|
+
 
 B Aeolian - B C# D E F# G A
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
@@ -334,11 +389,11 @@ B--|---|C#-|D--|---|E--|---|F#-|G--|---|A--|---|B--|---|C#-|D--|
 </details>
 
 ## C Ionian (Major) in open C tuning
-<details><summary>./key-mode -mode Ionian -key C -fingerboards -guitar-tuning "C G C G C E"</summary>
+<details><summary>./key-mode.pl -mode Ionian -key C -fingerboards -guitar-tuning "C G C G C E"</summary>
 <p>
 
 ```bash
-$ ./key-mode -mode Ionian -key C -fingerboards -guitar-tuning "C G C G C E"
+$ ./key-mode.pl -mode Ionian -key C -fingerboards -guitar-tuning "C G C G C E"
 
   C  -  Ionian
   
@@ -349,14 +404,18 @@ $ ./key-mode -mode Ionian -key C -fingerboards -guitar-tuning "C G C G C E"
   Chords:
 
     | C Major | D Minor | E Minor | F Major | G Major | A Minor | B Dim ° | 
-    | C E G   | D F A   | E G B   | F A C   | G B D   | A C E   | B D F   | 
+    | C E G   | D F A   | E G B   | F A C   | G B D   | A C E   | B D F  | 
     | I       | ii      | iii     | IV      | V       | vi      | vii°    | 
   
   Progression Chart:
 
-                         IV  -  vii°
-    vii° -> iii -> vi <      ><       > I
-                         ii  -  V
+                             IV  -- vii°
+    vii° ->  iii ->   vi <       ><       >    I
+                              ii  --    V
+
+                                     F Major  --  B Dim ° 
+    B Dim ° -> E Minor -> A Minor <           ><           > C Major
+                                     D Minor  --  G Major 
 
 C Major - C E G 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
@@ -367,6 +426,7 @@ C--|---|---|---|E--|---|---|G--|---|---|---|---|C--|---|---|---|
 G--|---|---|---|---|C--|---|---|---|E--|---|---|G--|---|---|---|
 C--|---|---|---|E--|---|---|G--|---|---|---|---|C--|---|---|---|
 
+
 D Minor - D F A 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
 ---|F--|---|---|---|A--|---|---|---|---|D--|---|---|F--|---|---|
@@ -375,6 +435,7 @@ D Minor - D F A
 ---|---|D--|---|---|F--|---|---|---|A--|---|---|---|---|D--|---|
 ---|---|A--|---|---|---|---|D--|---|---|F--|---|---|---|A--|---|
 ---|---|D--|---|---|F--|---|---|---|A--|---|---|---|---|D--|---|
+
 
 E Minor - E G B 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
@@ -385,6 +446,7 @@ G--|---|---|---|B--|---|---|---|---|E--|---|---|G--|---|---|---|
 G--|---|---|---|B--|---|---|---|---|E--|---|---|G--|---|---|---|
 ---|---|---|---|E--|---|---|G--|---|---|---|B--|---|---|---|---|
 
+
 F Major - F A C 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
 ---|F--|---|---|---|A--|---|---|C--|---|---|---|---|F--|---|---|
@@ -393,6 +455,7 @@ C--|---|---|---|---|F--|---|---|---|A--|---|---|C--|---|---|---|
 C--|---|---|---|---|F--|---|---|---|A--|---|---|C--|---|---|---|
 ---|---|A--|---|---|C--|---|---|---|---|F--|---|---|---|A--|---|
 C--|---|---|---|---|F--|---|---|---|A--|---|---|C--|---|---|---|
+
 
 G Major - G B D 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
@@ -403,6 +466,7 @@ G--|---|---|---|B--|---|---|D--|---|---|---|---|G--|---|---|---|
 G--|---|---|---|B--|---|---|D--|---|---|---|---|G--|---|---|---|
 ---|---|D--|---|---|---|---|G--|---|---|---|B--|---|---|D--|---|
 
+
 A Minor - A C E 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
 E--|---|---|---|---|A--|---|---|C--|---|---|---|E--|---|---|---|
@@ -412,6 +476,7 @@ C--|---|---|---|E--|---|---|---|---|A--|---|---|C--|---|---|---|
 ---|---|A--|---|---|C--|---|---|---|E--|---|---|---|---|A--|---|
 C--|---|---|---|E--|---|---|---|---|A--|---|---|C--|---|---|---|
 
+
 B Dim ° - B D F 
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
 ---|F--|---|---|---|---|---|B--|---|---|D--|---|---|F--|---|---|
@@ -420,6 +485,7 @@ B Dim ° - B D F
 ---|---|D--|---|---|F--|---|---|---|---|---|B--|---|---|D--|---|
 ---|---|---|---|B--|---|---|D--|---|---|F--|---|---|---|---|---|
 ---|---|D--|---|---|F--|---|---|---|---|---|B--|---|---|D--|---|
+
 
 C Ionian - C D E F G A B
 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  
