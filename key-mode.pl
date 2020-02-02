@@ -39,9 +39,11 @@ use Getopt::Long;			# handle arguments
 
 my $prog = basename($0);
 
+
+
 # conventional scale notes
 my @notes = ("A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#");
-# TODO flats optional instead of sharps?
+my @notesFlat = ("A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab");
 
 # TODO a hash of modes that correlate to scale steps
 # all modes correspond to a number of steps in a scale
@@ -112,7 +114,8 @@ my %colors = (
 );
 
 my %color_backgrounds = (
-  '30m' => $colors{BGBLACK},
+  #'30m' => $colors{BGBLACK},
+  '30m' => "\x1b[48;5;235m",
   '31m' => $colors{BGRED},
   '32m' => $colors{BGGREEN},
   '33m' => $colors{BGYELLOW},
@@ -123,14 +126,14 @@ my %color_backgrounds = (
 );
 
 my %color_font_bg_correlator = (
-  '30m' => $colors{WHITE},
-  '31m' => $colors{WHITE},
-  '32m' => $colors{WHITE},
-  '33m' => $colors{BLACK},
-  '34m' => $colors{WHITE},
-  '35m' => $colors{WHITE},
-  '36m' => $colors{BLACK},
-  '37m' => $colors{BLACK},
+  '30m' => $colors{BWHITE},
+  '31m' => $colors{BWHITE},
+  '32m' => $colors{BWHITE},
+  '33m' => $colors{BBLACK},
+  '34m' => $colors{BWHITE},
+  '35m' => $colors{BWHITE},
+  '36m' => $colors{BWHITE},
+  '37m' => $colors{BBLACK},
 );
 
 my %scale_colors = (
@@ -143,26 +146,20 @@ my %scale_colors = (
   '6' => $colors{BCYAN},
 );
 
+my $ansiColorRegex = '\e\[(?:1;)?(\d+m)|\x1b\[\d+;\d+;(\d+m)';
+
 my $fret_color = $colors{BWHITE};
 
 # keyboard options...
 my $show_keyboard;
 my $octaves = 3;
 my $keyWidth = 3;
-my $vert_bar = "$colors{BGWHITE}$colors{BLACK}\x{2503}";
+my $vert_bar = $colors{BGWHITE} . $colors{BBLACK} . "\x{2503}";
 my @kbdNoteOrder = ("B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#");
+my @kbdNoteOrderFlat = ("B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb");
 my @kbdFullNotes;
-map {push(@kbdFullNotes, @kbdNoteOrder)} 1..$octaves + 1;
+#map {push(@kbdFullNotes, @kbdNoteOrder)} 1..$octaves + 1;
 my %piano_keys;
-for my $note (@kbdNoteOrder) {
-  if ($note =~ /#$/) {
-    $piano_keys{$note}{COLOR} = $colors{WHITE};
-    $piano_keys{$note}{BGCOLOR} = $colors{BGBLACK};
-  } else {
-    $piano_keys{$note}{COLOR} = $colors{BLACK};
-    $piano_keys{$note}{BGCOLOR} = $colors{BGWHITE};
-  }
-}
 my $start_white_keys = $colors{BLACK} . $colors{BGWHITE}. " " x $keyWidth . $vert_bar . " " x ($keyWidth - 1) ;
 my $two_black_keys = $colors{BGBLACK}. " " x $keyWidth . "$colors{BGWHITE} $colors{BGBLACK}" . " " x $keyWidth;
 my $three_black_keys = "$two_black_keys$colors{BGWHITE} $colors{BGBLACK}" . " " x $keyWidth;
@@ -171,7 +168,7 @@ my $two_white_keys = $colors{BGWHITE} . " " x ($keyWidth - 1) . $vert_bar . " " 
 
 
 # expected input vars
-my ($in_key, $in_mode, @in_steps, $user_scale_name);
+my ($in_key, $in_mode, @in_steps, $user_scale_name, $use_flats);
 
 
 
@@ -213,6 +210,9 @@ Usage:
     for extrapolation of non-built in modes.
 
 Additional Options
+
+  -flat
+    Use flat notes inseted of sharp;
 
   -name ["Scale Name"]
     Scale Name can be any quoted string.
@@ -275,6 +275,11 @@ Examples:
 }
 
 sub check_required_args {		# handle leftover @ARGV stuff here if need be
+  if ($use_flats) {
+    @kbdNoteOrder = @kbdNoteOrderFlat;
+    @notes = @notesFlat;
+  }
+
   &err("Invalid Key! Must be one of: " . join", ", @notes) unless defined $in_key;
   &err("Invalid Key! Must be one of: " . join", ", @notes) unless grep {$in_key eq $_} @notes;
   if (! $in_mode && ! @in_steps) {
@@ -290,6 +295,18 @@ sub check_required_args {		# handle leftover @ARGV stuff here if need be
   if (@in_steps) {
     &err("Unexpected number of steps in -steps!") unless scalar @in_steps == 7;
     &err("Steps don't add up to 12!") unless (eval join"+",@in_steps) == 12;
+  }
+
+  # handle note rearrangement after flats
+  map {push(@kbdFullNotes, @kbdNoteOrder)} 1..$octaves + 1;
+  for my $note (@kbdNoteOrder) {
+    if ($note =~ /[#b]$/) {
+      $piano_keys{$note}{COLOR} = $colors{WHITE};
+      $piano_keys{$note}{BGCOLOR} = $colors{BGBLACK};
+    } else {
+      $piano_keys{$note}{COLOR} = $colors{BLACK};
+      $piano_keys{$note}{BGCOLOR} = $colors{BGWHITE};
+    }
   }
 }
 
@@ -328,6 +345,7 @@ sub handle_args {
     'mode=s' => \$in_mode,
     'steps=s' => \&parse_insteps,
     'name=s' => \$user_scale_name,
+    'flats' => \$use_flats,
     'fingerboards' => \$show_fingerboard,
     'keyboards' => \$show_keyboard,
     'guitar-tuning=s' => \&parse_tuning,
@@ -747,9 +765,10 @@ sub array_search {
   return -1;
 }
 
+
 sub getFgBgColor {
   my ($color) = @_;
-  if ($color =~ /\e\[(?:1;)?(\d+m)/) {
+  if ($color =~ /$ansiColorRegex/) {
     my $colorBase = $1;
     if (exists $color_backgrounds{$colorBase} && exists $color_font_bg_correlator{$colorBase}) {
       return ($color_backgrounds{$colorBase}, $color_font_bg_correlator{$colorBase});
@@ -764,7 +783,7 @@ sub mid_line_pattern {
   my $line = &top_line_pattern;
   my $ret;
   my @notes = @kbdFullNotes;
-  while ($line =~ /(?:(.*?)(\s+))/g) {
+  while ($line =~ /(?:(\S*?)(\s+))/g) {
     my $matchText = $1;
     my $matchSpaces = $2;
     my $note = shift @notes;
@@ -772,21 +791,20 @@ sub mid_line_pattern {
       my $colorIndex = &array_search($note, @noteArr);
       my ($bgColor, $fgColor) = &getFgBgColor($noteColors[$colorIndex]);
       my $colorSet = $fgColor . $bgColor;
-      # highlight note
       my $localKeyWidth = $keyWidth;
-      # handle highlighting keys (or not) if white and mid
       $localKeyWidth = length $matchSpaces;# if length $matchSpaces == 1;
       my $text = " " x $localKeyWidth;
       my $startSpaces = int($localKeyWidth / 2);
       $startSpaces++ if $startSpaces == 0;
-      # display note names?
-      $text =~ s/( ){$startSpaces}(.*)/$1$note$2/ if $note =~ /#$/;
+      $text =~ s/( ){$startSpaces}(.*)/$1$note$2/ if $note =~ /[#b]$/;
       $text =~ s/(.{$localKeyWidth}).*/$1/;
-      $ret .= $matchText . $colorSet . $text;
+      #$ret .= $matchText . $colorSet . $text;
+      #$ret .= $colors{BLACK} . $matchText . $colorSet . $text . $colors{BLACK};
+      $ret .= $colors{BLACK} . $matchText . $colorSet . $text . $colors{BLACK};
     } else {
       # just default stuff
       my $colorSet = $piano_keys{$note}{COLOR} . $piano_keys{$note}{BGCOLOR};
-      $ret .= $colorSet . $matchText . " " x length($matchSpaces);
+      $ret .= $colors{BLACK} . $colorSet . $matchText . " " x length($matchSpaces);
     }
   }
   $ret .= $reset;
@@ -797,7 +815,7 @@ sub bottom_line_pattern {
   my ($noteAref, $colorAref) = @_;
   my @noteHighlight = @{$noteAref};
   my @noteColors = @{$colorAref};
-  my @notes = grep {$_ !~ /#$/} @kbdFullNotes;
+  my @notes = grep {$_ !~ /[#b]$/} @kbdFullNotes;
   my $ret = "$colors{BLACK}$colors{BGWHITE}";
   my $i = 0;
   for (1..$octaves * 7 + 2) {
@@ -805,8 +823,6 @@ sub bottom_line_pattern {
     #my $colorSet = $piano_keys{$note}{COLOR} . $piano_keys{$note}{BGCOLOR};
     if (grep {$note eq $_} @noteHighlight) {
       my $colorIndex = &array_search($note, @noteHighlight);
-      #my $fgColor = $noteColors[$colorIndex];
-      #my $bgColor = &getbgColor($fgColor);
       my ($bgColor, $fgColor) = &getFgBgColor($noteColors[$colorIndex]);
       my $colorSet = $fgColor . $bgColor;
       my $text = " " x $keyWidth;
@@ -836,7 +852,7 @@ sub bottom_line_pattern {
 
 sub length_without_color {
   my ($txt) = @_;
-  $txt =~ s/\e\[(?:1;)?\d+m//g;
+  $txt =~ s/$ansiColorRegex//g;
   return length $txt;
 }
 
