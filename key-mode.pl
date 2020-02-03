@@ -23,15 +23,12 @@ use Getopt::Long;			# handle arguments
   # do the right thing. 
   # assume some 2nd/6th was between them ?
 #
-# that and 8 note scales like bebop minor/dominant
-#
-#
 # hmmmm
 # maybe some other gabage
 # pairs of step patterns, 33, 34, 43, 44, and see what combinations can happen in a scale.
 # perhaps that's extensible... 7ths.. 33? 34? 43? 44?
 # 
-# 
+
 
 #
 # Default Variables
@@ -853,44 +850,6 @@ sub SteveMugglinProgressionBlockFlat {
   return $newtxt;
 }
 
-# TODO unused sub, remove?
-sub SteveMugglinProgressionBlock {
-  my ($chordRef, $noteRef) = @_;
-  # chordRef = array of strings "E Minor" or "iim"
-  # noteRef = array of strings of notes of that scale, E, F#, etc
-  # this will have to find the longest possible string, and use that
-  # length logic for padding the boxes
-  my $txt = <<"  EOF";
-   ┏━━━┓   ┏━━━┓
-   ┃ 2 ┃   ┃ 5 ┃
-  ╭┨7/2┠─▷─┨   ┃
-  │┗━┯━┛   ┗┯┯━┛
-  ▽  │╭─────╯│
-  │  ▽▽      ▽
- ╭╯┏━┷┷┓   ┏━┷━┓
- │ ┃ 3 ┃   ┃ 6 ┃
- │╭┨1/3┠─▷─┨4/6┃
- ││┗━┯━┛   ┗┯┯━┛
- │▽  │╭─────╯│
- ││  ▽▽      ▽
- ├╯┏━┷┷┓   ┏━┷━┓
- │ ┃ 4 ┃   ┃ 2 ┃
- │╭┨2/4┠─▷─┨7/2┃
- ││┗━┯┯┛ ╭─┺━┯━┛
- │▽  │╰──┼──╮│
- ││  ▽╭◁─╯  ▽▽
- ├╯┏━┷┷┓   ┏┷┷━┓
- │╭┨ 5 ┠─◁─┨1/5┃
- ││┗━┯━┛   ┗━━━┛
- │▽  ▽ 
- ├╯┏━┷━┓   ┏━━━┓
- ╰─┨ 1 ┠─▷─┨4/1┃
-   ┃   ┠─◁─┨5/1┃
-   ┗━━━┛   ┗━━━┛
-  EOF
-  #say $txt;
-}
-
 
 sub relation_block {
   my ($musicRef, $scaleRef) = @_;
@@ -1026,10 +985,46 @@ Chords in X/Y notation are chord X with root/base note Y
 # 
 # 
 #
-  
-#
-# TODO this function is a bit long and could use some finesse
-#
+
+sub fret_fill_logic {
+  my ($noteRef, $chordRef, $scaleRef) = @_;
+  my @note_shift = @{$noteRef};
+  my @chord_notes = @{$chordRef};
+  my @scale_notes = @{$scaleRef};
+  my $string;
+  for my $fret (0..$max_fret_number) {
+    my $difference = $fret_width - length $note_shift[$fret];
+    my $diffstr = "-" x $difference;
+    my $matched = 0;
+    if (scalar @chord_notes == 3) {
+      for my $i (0..2) {
+        if ($note_shift[$fret] eq $chord_notes[$i]) {
+          my $colors;
+          if ($static_triad_colors) {
+            $colors = $scale_colors{$i * 2};
+          } else {
+            my $idx = &array_search($chord_notes[$i], @scale_notes);
+            $colors = $scale_colors{$idx};
+          }
+          $matched = 1;
+          if (! defined $colors) {
+            &warn("Got bad stuff from fret " . ($fret + 1) . " and note " . $chord_notes[$i] . " with scale notes: " . join",",@scale_notes);
+          }
+          $string .= $colors . $note_shift[$fret] . $reset . $diffstr . "|";
+        }
+      }
+    } else {
+      for my $i (0..$#scale_notes) {
+        if ($note_shift[$fret] eq $chord_notes[$i]) {
+          $matched = 1;
+          $string .= $scale_colors{$i} . $note_shift[$fret] . $reset . $diffstr . "|";
+        }
+      }
+    }
+    $string .= "-" x $fret_width . "|" if $matched == 0;
+  }
+  return $string;
+} 
 
 sub get_guitar_boards {
   my ($scale_ref, $music_ref) = @_;
@@ -1049,43 +1044,11 @@ sub get_guitar_boards {
     my @chord_notes = split(/\s+/, $chord_notes);
     my @print_arr;
     for my $tuning_key (@guitar_tuning) {
-      my $string;
       # rotate note array left for each tuning key
       my ($tuning_index) = grep {$tuning_key eq $repeat_notes[$_]} 0..$#repeat_notes; 
       my @note_shift = &rotate_array_left($tuning_index, @repeat_notes);
 
-      for my $fret (0..$max_fret_number) {
-        my $difference = $fret_width - length $note_shift[$fret];
-        my $diffstr = "-" x $difference;
-        my $matched = 0;
-        if (scalar @chord_notes == 3) {
-          for my $i (0..2) {
-            if ($note_shift[$fret] eq $chord_notes[$i]) {
-              my $colors;
-              if ($static_triad_colors) {
-                $colors = $scale_colors{$i * 2};
-              } else {
-                my $idx = &array_search($chord_notes[$i], @scale_notes);
-                $colors = $scale_colors{$idx};
-              }
-              $matched = 1;
-              if (! defined $colors) {
-                &warn("Got bad stuff from fret " . ($fret + 1) . " and note " . $chord_notes[$i] . " with scale notes: " . join",",@scale_notes);
-              }
-              $string .= $colors . $note_shift[$fret] . $reset . $diffstr . "|";
-            }
-          }
-        } else {
-          for my $i (0..$#scale_notes) {
-            if ($note_shift[$fret] eq $chord_notes[$i]) {
-              $matched = 1;
-              $string .= $scale_colors{$i} . $note_shift[$fret] . $reset . $diffstr . "|";
-            }
-          }
-        }
-        $string .= "-" x $fret_width . "|" if $matched == 0;
-      }
-      unshift(@print_arr, $string);
+      unshift(@print_arr, &fret_fill_logic(\@note_shift, \@chord_notes, \@scale_notes));
     }
     my $number_str;
     for my $i (0..$max_fret_number) {
