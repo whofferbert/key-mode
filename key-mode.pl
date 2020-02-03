@@ -116,30 +116,30 @@ my %colors = (
   'BGWHITE'        => "\e[47m"
 );
 
+#
+# TODO need a kinder interface to this color selection/setting
+#
 my %color_backgrounds = (
-  #'30m' => $colors{BGBLACK},
-  #'30m' => "\e[38;5;235m",
   '0' => $colors{BGRED},
-  '1' => $colors{BGGREEN},
+  '1' => "\x1b[48;5;232m",
   '2' => $colors{BGYELLOW},
   '3' => $colors{BGBLUE},
-  '4' => $colors{BGMAJENTA},
-  '5' => $colors{BGCYAN},
-  '6' => $colors{BGWHITE},
+  '4' => $colors{BGGREEN},
+  '5' => $colors{BGMAJENTA},
+  '6' => $colors{BGCYAN},
   '7' => "\x1b[48;5;21m",
   '8' => "\x1b[48;5;57m",
   '9' => "\x1b[48;5;93m",
 );
 
 my %color_font_bg_correlator = (
-  #'' => $colors{BWHITE},
   '0' => $colors{BWHITE},
   '1' => $colors{BWHITE},
   '2' => $colors{BBLACK},
   '3' => $colors{BWHITE},
   '4' => $colors{BWHITE},
   '5' => $colors{BWHITE},
-  '6' => $colors{BBLACK},
+  '6' => $colors{BWHITE},
   '7' => $colors{BWHITE},
   '8' => $colors{BWHITE},
   '9' => $colors{BWHITE},
@@ -1268,16 +1268,6 @@ sub gen_keyboards {
     push(@txt, $bottom_line) for 1..3;
     push(@txt_arr, \@txt);
   }
-  #{
-  #  my @colors = map {$scale_colors{$_}} sort keys %scale_colors;
-  #  my @txt;
-  #  push(@txt, "");
-  #  push(@txt, "Key: " . $music{0}{base} . " - Scale: " . $in_mode);
-  #  push(@txt, &top_line_pattern) for 1..1;
-  #  push(@txt, &mid_line_pattern(\@scaleNotes, \@colors, \@scaleNotes)) for 1..3;
-  #  push(@txt, &bottom_line_pattern(\@scaleNotes, \@colors, \@scaleNotes)) for 1..3;
-  #  push(@txt_arr, \@txt);
-  #}
   return (@txt_arr);
 }
 
