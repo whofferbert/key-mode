@@ -695,12 +695,12 @@ sub smBlock1Horiz {
   my $spaces = " " x ($len - 3);
   # sed replace the text and return
   $txt =~ s/^(\s+┏)/$1$bars/mg;
-  $txt =~ s/^(\s+┃) 5 ┃/$1$scale_colors{4}$fivepad$reset┃/m;
-  $txt =~ s/^(\s+┃) - ┠/$1$emptypad┃/mg;
+  $txt =~ s/^(\s+┃) 5 (┃)/$1$scale_colors{4}$fivepad$reset$2/m;
+  $txt =~ s/^(\s+┃) - (┠)/$1$emptypad$2/mg;
   $txt =~ s/^(\s+┗)(━┯┯┛)/$1$bars$2/m;
   $txt =~ s/^(\s{4})(?=\S)/$1$spaces/mg;
-  $txt =~ s/^(\s+┃) 2 ┃/$1$scale_colors{1}$secondpad$reset┃/m;
-  $txt =~ s/^(\s+┃)7\/2┠/$1$scale_colors{6}$seventhpad$reset┃/m;
+  $txt =~ s/^(\s+┃) 2 (┃)/$1$scale_colors{1}$secondpad$reset$2/m;
+  $txt =~ s/^(\s+┃)7\/2(┠)/$1$scale_colors{6}$seventhpad$reset$2/m;
   $txt =~ s/^(\s+┗)(━┯━┛)/$1$bars$2/m;
   return $txt;
 }
@@ -720,13 +720,13 @@ sub smBlock2Horiz {
   my $spaces = " " x ($len - 3);
   # sed replace the text and return
   $txt =~ s/^(.*?┏)(━━━┓)/$1$bars$2/mg;
-  $txt =~ s/^(.*?┃) 6 ┃/$1$scale_colors{5}$sixpad$reset┃/m;
-  $txt =~ s/^(.*?┨)4\/6┠/$1$scale_colors{3}$fourpad$reset┃/mg;
+  $txt =~ s/^(.*?┃) 6 (┃)/$1$scale_colors{5}$sixpad$reset$2/m;
+  $txt =~ s/^(.*?┨)4\/6(┠)/$1$scale_colors{3}$fourpad$reset$2/mg;
   $txt =~ s/^(.*?┗)(━┯━┛)/$1$bars$2/m;
 
   $txt =~ s/^(.*?┏)(┷┷━┓)/$1$bars$2/mg;
-  $txt =~ s/^(.*?┃) 3 ┃/$1$scale_colors{2}$threepad$reset┃/m;
-  $txt =~ s/^(.*?┨)1\/3┠/$1$scale_colors{0}$rootpad$reset┃/m;
+  $txt =~ s/^(.*?┃) 3 (┃)/$1$scale_colors{2}$threepad$reset$2/m;
+  $txt =~ s/^(.*?┨)1\/3(┠)/$1$scale_colors{0}$rootpad$reset$2/m;
   $txt =~ s/^(.*?┗)(━┯━┛)/$1$bars$2/m;
 
   $txt =~ s/^(.*?╰─)/$1$pipes/m;
@@ -751,13 +751,13 @@ sub smBlock3Horiz {
   my $spaces = " " x ($len - 3);
   # sed replace the text and return
   $txt =~ s/^(.*?┏)(━━━┓)/$1$bars$2/mg;
-  $txt =~ s/^(.*?┃) 2 ┃/$1$scale_colors{1}$twopad$reset┃/m;
-  $txt =~ s/^(.*?┨)7\/2┠/$1$scale_colors{6}$sevenpad$reset┃/mg;
+  $txt =~ s/^(.*?┃) 2 (┃)/$1$scale_colors{1}$twopad$reset$2/m;
+  $txt =~ s/^(.*?┨)7\/2(┠)/$1$scale_colors{6}$sevenpad$reset$2/mg;
   $txt =~ s/^(.*?┗)(━┯┯┛)/$1$bars$2/m;
 
   $txt =~ s/^(.*?┏)(━┷━┓)/$1$bars$2/mg;
-  $txt =~ s/^(.*?┃) 4 ┠/$1$scale_colors{3}$fourpad$reset┃/m;
-  $txt =~ s/^(.*?┨)2\/4┠/$1$scale_colors{1}$secondpad$reset┃/m;
+  $txt =~ s/^(.*?┃) 4 (┠)/$1$scale_colors{3}$fourpad$reset$2/m;
+  $txt =~ s/^(.*?┨)2\/4(┠)/$1$scale_colors{1}$secondpad$reset$2/m;
   $txt =~ s/^(.*?┗)(━┯━┛)/$1$bars$2/m;
   
   $txt =~ s/^(.*?)(│╰▷)/$1$spaces$2/m;
@@ -785,7 +785,7 @@ sub smBlock4Horiz {
   $txt =~ s/^(.*?┺)(━┯━┛)/$1$bars$2/m;
 
   $txt =~ s/^(.*?┏)(┷┷━┓)/$1$bars$2/mg;
-  $txt =~ s/^(.*?┨) 5 ┠/$1$scale_colors{4}$fivepad$reset┃/m;
+  $txt =~ s/^(.*?┨) 5 (┠)/$1$scale_colors{4}$fivepad$reset$2/m;
   $txt =~ s/^(.*?┗)(━━━┛)/$1$bars$2/m;
 
   $txt =~ s/^(.*?┼)/$1$pipes/m;
