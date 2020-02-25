@@ -10,6 +10,9 @@ use warnings;				# know when stuff is wrong
 use Data::Dumper;			# debug
 use File::Basename;			# know where the script lives
 use Getopt::Long;			# handle arguments
+if ($^O !~ /linux/) {
+  require Win32::Console::ANSI;		# colors in windows
+}
 
 # TODO require some module so windoze understands
 # the ANSII color escape sequences
@@ -62,7 +65,6 @@ my %mode_hash = (
 
   'Bebop Minor'		=> [2, 1, 1, 1, 2, 2, 1, 2],
 
-  #''	=> [], 
 );
 
 # numerals for chart representations, extra for random scales?
@@ -903,6 +905,7 @@ sub relation_name_block {
   my @chords;
   if (exists $music{7}) {
     my @closestNotes = &closest_mode($scaleRef);
+    # TODO this might also have to change something else...
     for my $chord (sort keys %music) {
       if (grep {$_ eq $music{$chord}{base}} @closestNotes) {
         push(@chords, $music{$chord}{base} . " " . $music{$chord}{sig});
