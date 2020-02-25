@@ -213,7 +213,6 @@ Usage:
     [note] can be any of:
     @notes
 
-  -m
   -mode [mode]
     [mode] can be any of: Major, Minor,
     $mode_str
@@ -263,6 +262,10 @@ Guitar Options:
     Open notes can be any quoted list of notes, low to high.
     Not limited to 6 strings.
     Default is "E A D G B E"
+
+  -max-fret [int]
+    Maximum fret number to display to.
+    Default is $max_fret_number
 
 Keyboard Options:
 
@@ -371,7 +374,7 @@ sub parse_colors {
 sub handle_args {
   Getopt::Long::GetOptions(
     'R|key=s' => \$in_key,
-    'm|mode=s' => \$in_mode,
+    'mode=s' => \$in_mode,
     'P|steps=s' => \&parse_insteps,
     'n|name=s' => \$user_scale_name,
     'b|flats' => \$use_flats,
@@ -379,6 +382,7 @@ sub handle_args {
     'F|fingerboards' => \$show_fingerboard,
     'K|keyboards' => \$show_keyboard,
     'g|guitar-tuning=s' => \&parse_tuning,
+    'max-fret=i' => \$max_fret_number,
     'color-1=s' => sub {&parse_colors(0, $_[1])},
     'color-2=s' => sub {&parse_colors(1, $_[1])},
     'color-3=s' => sub {&parse_colors(2, $_[1])},
