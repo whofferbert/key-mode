@@ -676,6 +676,7 @@ sub chord_output {
 }
 
 #
+# TODO this is horrible. just... wow. it should be better
 #
 # The following 5 subs are for doing regex replacements on the
 # built in block diagram, based on what needs to go in it.
@@ -847,9 +848,10 @@ sub SteveMugglinProgressionBlockFlat {
     ╰───────┴────────┴───────────────╯  
   EOF
 
+  # oh
   my $newtxt = &smBlock1Horiz($txtRef, $chords[4], $chords[1], $chords[6] . "/" . $notes[1]);
-  $newtxt = &smBlock2Horiz($newtxt, $chords[5], $chords[4] . "/" . $notes[5] , $chords[2], $chords[0] . "/" . $notes[2]);
-  $newtxt = &smBlock3Horiz($newtxt, $chords[1], $chords[6] . "/" . $notes[1] , $chords[4], $chords[1] . "/" . $notes[3]);
+  $newtxt = &smBlock2Horiz($newtxt, $chords[5], $chords[3] . "/" . $notes[5] , $chords[2], $chords[0] . "/" . $notes[2]);
+  $newtxt = &smBlock3Horiz($newtxt, $chords[1], $chords[6] . "/" . $notes[1] , $chords[3], $chords[1] . "/" . $notes[3]);
   $newtxt = &smBlock4Horiz($newtxt, $chords[0] . "/" . $notes[4], $chords[4]);
   $newtxt = &smBlock5Horiz($newtxt, $chords[3] . "/" . $notes[0], $chords[4] . "/" . $notes[0], $chords[0]);
 
